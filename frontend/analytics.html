@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Analytics - FocusFlow</title>
+  <title>FocusFlow - Analytics</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -11,125 +11,229 @@
       theme: {
         extend: {
           colors: {
-            primary: { DEFAULT: '#E8725C', light: '#F0A698', dark: '#C45A47' },
-            accent: { DEFAULT: '#5CC5E8', light: '#9EDBF0', dark: '#3AA8CF' },
-            slate: { 50: '#F8FAFC', 100: '#F1F5F9', 200: '#E2E8F0', 300: '#CBD5E1', 400: '#94A3B8', 500: '#64748B', 600: '#475569', 700: '#334155', 800: '#1E293B', 850: '#151D2D', 900: '#0F172A', 950: '#020617' }
+            work: '#E8725C',
+            'work-hover': '#D5634D',
+            break: '#5CC5E8',
+            'break-hover': '#4AB4D9',
           }
         }
       }
     }
   </script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #fda085 100%);
+      background-attachment: fixed;
+      min-height: 100vh;
+    }
+
+    .dark body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #533483 75%, #2c003e 100%);
+      background-attachment: fixed;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .dark .glass {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .dark .glass-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .glass-button {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .glass-button:hover {
+      background: rgba(255, 255, 255, 0.35);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .dark .glass-button {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .dark .glass-button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
     @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes scale-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
     .animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
   </style>
 </head>
-<body class="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
-  <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
-    <div class="mx-auto max-w-6xl flex items-center justify-between px-4 h-14">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </div>
-        <span class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">FocusFlow</span>
-        <nav class="hidden sm:flex items-center gap-1 ml-6">
-          <a href="index.html" class="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Timer</a>
-          <a href="history.html" class="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">History</a>
-          <a href="analytics.html" class="px-3 py-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950 rounded-md">Analytics</a>
-        </nav>
+<body class="min-h-screen text-gray-800 dark:text-gray-100 transition-colors duration-300">
+  <!-- Navigation -->
+  <nav class="glass fixed top-0 left-0 right-0 z-50 px-6 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-xl font-bold text-white">FocusFlow</span>
       </div>
-      <div class="flex items-center gap-2">
-        <button onclick="window.FocusFlow?.DarkMode.toggle()" class="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+      
+      <div class="flex items-center space-x-4">
+        <a href="index.html" class="text-white/70 hover:text-white font-medium transition-colors">Timer</a>
+        <a href="history.html" class="text-white/70 hover:text-white font-medium transition-colors">History</a>
+        <a href="analytics.html" class="text-white/90 hover:text-white font-medium transition-colors">Analytics</a>
+        <button onclick="window.FocusFlow?.DarkMode.toggle()" class="glass-button p-2 rounded-lg text-white" title="Toggle dark mode">
           <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
           <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
         </button>
       </div>
     </div>
-  </header>
-  <main class="mx-auto max-w-6xl px-4 py-8">
-    <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-6 animate-fade-in">Analytics</h1>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 animate-fade-in" style="animation-delay: 0.05s;">
-      <div class="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Sessions Today</div>
-        <div class="text-3xl font-bold text-slate-900 dark:text-white" id="stat-sessions">0</div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="mx-auto max-w-6xl px-6 pt-24 pb-12">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-white mb-2 animate-fade-in">Analytics</h1>
+      <p class="text-white/70 animate-fade-in">Track your focus patterns and streaks</p>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-fade-in" style="animation-delay: 0.05s;">
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-white/70 text-sm font-medium">Sessions Today</span>
+          <svg class="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </div>
+        <div class="text-3xl font-bold text-white" id="stat-sessions">0</div>
       </div>
-      <div class="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Focus Time</div>
-        <div class="text-3xl font-bold text-primary" id="stat-focus">0m</div>
+      
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-white/70 text-sm font-medium">Focus Time</span>
+          <svg class="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="text-3xl font-bold text-white" id="stat-focus">0m</div>
       </div>
-      <div class="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Current Streak</div>
-        <div class="text-3xl font-bold text-accent" id="stat-streak">0 days</div>
+      
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-white/70 text-sm font-medium">Current Streak</span>
+          <svg class="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+          </svg>
+        </div>
+        <div class="text-3xl font-bold text-white" id="stat-streak">0 days</div>
       </div>
     </div>
-    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-8 animate-fade-in" style="animation-delay: 0.1s;">
-      <div class="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800">
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Streak Calendar</h2>
+
+    <!-- Streak Calendar -->
+    <div class="glass-card rounded-2xl mb-8 animate-fade-in" style="animation-delay: 0.1s;">
+      <div class="flex items-center justify-between p-6 border-b border-white/20">
+        <h2 class="text-lg font-semibold text-white">Streak Calendar</h2>
         <div class="flex items-center gap-2">
-          <button onclick="navigateMonth(-1)" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-            <svg class="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          <button onclick="navigateMonth(-1)" class="glass-button p-1.5 rounded-lg text-white transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
           </button>
-          <span id="calendar-month-label" class="text-sm font-medium text-slate-700 dark:text-slate-300 min-w-[120px] text-center"></span>
-          <button onclick="navigateMonth(1)" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-            <svg class="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <span id="calendar-month-label" class="text-sm font-medium text-white/90 min-w-[120px] text-center"></span>
+          <button onclick="navigateMonth(1)" class="glass-button p-1.5 rounded-lg text-white transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
       </div>
-      <div class="p-5">
+      <div class="p-6">
         <div class="grid grid-cols-7 gap-1 mb-2">
-          <div class="text-xs font-medium text-slate-500 dark:text-slate-400 text-center py-1">Mon</div>
-          <div class="text-xs font-medium text-slate-500 dark:text-slate-400 text-center py-1">Tue</div>
-          <div class="text-xs font-medium text-slate-500 dark:text-slate-400 text-center py-1">Wed</div>
-          <div class="text-xs font-medium text-slate-500 dark:text-slate-400 text-center py-1">Thu</div>
-          <div class="text-xs font-medium text-slate-500 dark:text-slate-400 text-center py-1">Fri</div>
-          <div class="text-xs font-medium text-slate-500 dark:text-slate-400 text-center py-1">Sat</div>
-          <div class="text-xs font-medium text-slate-500 dark:text-slate-400 text-center py-1">Sun</div>
+          <div class="text-xs font-medium text-white/60 text-center py-1">Mon</div>
+          <div class="text-xs font-medium text-white/60 text-center py-1">Tue</div>
+          <div class="text-xs font-medium text-white/60 text-center py-1">Wed</div>
+          <div class="text-xs font-medium text-white/60 text-center py-1">Thu</div>
+          <div class="text-xs font-medium text-white/60 text-center py-1">Fri</div>
+          <div class="text-xs font-medium text-white/60 text-center py-1">Sat</div>
+          <div class="text-xs font-medium text-white/60 text-center py-1">Sun</div>
         </div>
         <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
-        <div class="flex items-center justify-end gap-2 mt-4 text-xs text-slate-500 dark:text-slate-400">
+        <div class="flex items-center justify-end gap-2 mt-4 text-xs text-white/60">
           <span>Less</span>
-          <div class="w-4 h-4 rounded bg-slate-100 dark:bg-slate-800"></div>
-          <div class="w-4 h-4 rounded bg-primary-light/40"></div>
-          <div class="w-4 h-4 rounded bg-primary-light/70"></div>
-          <div class="w-4 h-4 rounded bg-primary"></div>
+          <div class="w-4 h-4 rounded bg-white/10"></div>
+          <div class="w-4 h-4 rounded bg-work/30"></div>
+          <div class="w-4 h-4 rounded bg-work/60"></div>
+          <div class="w-4 h-4 rounded bg-work"></div>
           <span>More</span>
         </div>
       </div>
     </div>
+
+    <!-- Charts and Motivation -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm animate-fade-in" style="animation-delay: 0.15s;">
-        <div class="p-5 border-b border-slate-200 dark:border-slate-800">
-          <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Weekly Trend</h2>
+      <!-- Weekly Trend -->
+      <div class="glass-card rounded-2xl animate-fade-in" style="animation-delay: 0.15s;">
+        <div class="p-6 border-b border-white/20">
+          <h2 class="text-lg font-semibold text-white">Weekly Trend</h2>
         </div>
-        <div class="p-5">
+        <div class="p-6">
           <div id="weekly-chart" class="flex items-end justify-between gap-2 h-40">
             <div class="flex-1 flex flex-col items-center justify-end h-full">
-              <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-t-md" style="height: 10%"></div>
-              <span class="text-xs text-slate-500 dark:text-slate-400 mt-2">Mon</span>
+              <div class="w-full bg-white/10 rounded-t-md" style="height: 10%"></div>
+              <span class="text-xs text-white/60 mt-2">Mon</span>
             </div>
           </div>
         </div>
       </div>
-      <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm animate-fade-in" style="animation-delay: 0.2s;">
-        <div class="p-5 border-b border-slate-200 dark:border-slate-800">
-          <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Motivation</h2>
+
+      <!-- Motivation Card -->
+      <div class="glass-card rounded-2xl animate-fade-in" style="animation-delay: 0.2s;">
+        <div class="p-6 border-b border-white/20">
+          <h2 class="text-lg font-semibold text-white">Motivation</h2>
         </div>
-        <div class="p-5 flex flex-col items-center justify-center text-center min-h-[200px]">
+        <div class="p-6 flex flex-col items-center justify-center text-center min-h-[200px]">
           <div class="text-5xl mb-4" id="motivation-emoji">🔥</div>
-          <div class="text-xl font-bold text-slate-900 dark:text-white mb-2" id="motivation-title">Keep Going!</div>
-          <div class="text-sm text-slate-500 dark:text-slate-400 max-w-xs" id="motivation-message">Start your first focus session to build your streak.</div>
-          <a href="index.html" class="mt-4 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors">Start Focusing</a>
+          <div class="text-xl font-bold text-white mb-2" id="motivation-title">Keep Going!</div>
+          <div class="text-sm text-white/70 max-w-xs" id="motivation-message">Start your first focus session to build your streak.</div>
+          <a href="index.html" class="mt-4 px-6 py-2.5 bg-work hover:bg-work-hover text-white text-sm font-medium rounded-xl transition-colors">Start Focusing</a>
         </div>
       </div>
     </div>
   </main>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-3"></div>
+
   <script src="app.js"></script>
   <script>
     const { API, DateTime } = window.FocusFlow;
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
+
     async function loadStats() {
       try {
         const today = DateTime.getToday();
@@ -142,6 +246,7 @@
         }
       } catch (err) { console.error('Stats error:', err); }
     }
+
     async function loadCalendar() {
       try {
         const res = await API.sessions.calendar(currentYear, currentMonth + 1);
@@ -163,17 +268,18 @@
           const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
           const count = data[dateStr] || 0;
           const intensity = count === 0 ? 0 : Math.min(Math.ceil((count / maxSessions) * 3), 3);
-          const colors = ['bg-slate-100 dark:bg-slate-800', 'bg-primary-light/40', 'bg-primary-light/70', 'bg-primary'];
+          const colors = ['bg-white/10', 'bg-work/30', 'bg-work/60', 'bg-work'];
           const isToday = dateStr === DateTime.getToday();
-          const border = isToday ? 'ring-2 ring-primary ring-offset-1 dark:ring-offset-slate-900' : '';
+          const border = isToday ? 'ring-2 ring-white ring-offset-1 ring-offset-transparent' : '';
           const el = document.createElement('div');
-          el.className = `w-full aspect-square rounded-md ${colors[intensity]} ${border} flex items-center justify-center text-xs font-medium text-slate-700 dark:text-slate-300 hover:scale-110 transition-transform cursor-default`;
+          el.className = `w-full aspect-square rounded-md ${colors[intensity]} ${border} flex items-center justify-center text-xs font-medium text-white/90 hover:scale-110 transition-transform cursor-default`;
           el.title = `${dateStr}: ${count} session${count !== 1 ? 's' : ''}`;
           el.textContent = day;
           grid.appendChild(el);
         }
       } catch (err) { console.error('Calendar error:', err); }
     }
+
     async function loadWeeklyChart() {
       try {
         const weekDates = [];
@@ -195,17 +301,18 @@
         counts.forEach((count, i) => {
           const height = Math.max((count / maxCount) * 100, 5);
           const isToday = i === 6;
-          const barColor = isToday ? 'bg-primary' : 'bg-primary-light/60 dark:bg-primary-dark/40';
-          const textColor = isToday ? 'text-primary font-bold' : 'text-slate-500 dark:text-slate-400';
+          const barColor = isToday ? 'bg-work' : 'bg-white/20';
+          const textColor = isToday ? 'text-white font-bold' : 'text-white/60';
           container.innerHTML += `
             <div class="flex-1 flex flex-col items-center justify-end h-full">
               <div class="text-xs ${textColor} mb-1">${count}</div>
               <div class="w-full ${barColor} rounded-t-md transition-all duration-500 hover:opacity-80" style="height: ${height}%"></div>
-              <span class="text-xs text-slate-500 dark:text-slate-400 mt-2">${days[i]}</span>
+              <span class="text-xs text-white/60 mt-2">${days[i]}</span>
             </div>`;
         });
       } catch (err) { console.error('Weekly chart error:', err); }
     }
+
     async function calculateStreak() {
       try {
         let streak = 0;
@@ -228,6 +335,7 @@
         return streak;
       } catch (err) { console.error('Streak error:', err); }
     }
+
     function updateMotivation(streak) {
       const emoji = document.getElementById('motivation-emoji');
       const title = document.getElementById('motivation-title');
@@ -249,12 +357,14 @@
         msg.textContent = 'Legendary focus! You\'re a productivity master. Keep inspiring!';
       }
     }
+
     function navigateMonth(delta) {
       currentMonth += delta;
       if (currentMonth > 11) { currentMonth = 0; currentYear++; }
       if (currentMonth < 0) { currentMonth = 11; currentYear--; }
       loadCalendar();
     }
+
     document.addEventListener('DOMContentLoaded', () => {
       loadStats();
       loadCalendar();
