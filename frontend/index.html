@@ -1,20 +1,254 @@
-  </main>
-
-  <!-- Scripts -->
-  <script src="app.js"></script>
-  <script src="sounds.js"></script>
-  <script src="timer.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusFlow - Pomodoro Timer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // Initialize timer when page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.FocusFlow && window.FocusFlow.Timer) {
-        window.FocusFlow.Timer.init();
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#ffffff',
+              100: '#ccfbf1',
+              200: '#99f6e4',
+              300: '#5eead4',
+              400: '#2dd4bf',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+              800: '#115e59',
+              900: '#134e4a',
+              950: '#042f2e'
+            },
+            work: {
+              50: '#fff1f2',
+              100: '#ffe4e6',
+              200: '#fecdd3',
+              300: '#fda4af',
+              400: '#fb7185',
+              500: '#f43f5e',
+              600: '#e11d48',
+              700: '#be123c',
+              800: '#9f1239',
+              900: '#881337',
+              950: '#4c0519'
+            },
+            break: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              300: '#86efac',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+              950: '#052e16'
+            },
+            longBreak: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+              950: '#172554'
+            }
+          }
+        }
       }
+    }
+  </script>
+  <style>
+    @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scale-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    @keyframes slide-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
+    .animate-scale-in { animation: scale-in 0.2s ease-out forwards; }
+    .animate-slide-up { animation: slide-up 0.3s ease-out forwards; }
+    .animate-shimmer { background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+    
+    .timer-ring {
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+    
+    .timer-ring-circle {
+      transition: stroke-dashoffset 0.35s;
+      stroke-dasharray: 440;
+      stroke-dashoffset: 0;
+    }
+    
+    .bg-work-mode { background-color: #fff1f2; }
+    .dark .bg-work-mode { background-color: #881337; }
+    
+    .bg-break-mode { background-color: #f0fdf4; }
+    .dark .bg-break-mode { background-color: #14532d; }
+    
+    .bg-long-break-mode { background-color: #eff6ff; }
+    .dark .bg-long-break-mode { background-color: #1e3a8a; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 bg-work-mode" id="app-body">
+  <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+    <div class="mx-auto max-w-5xl flex items-center justify-between px-4 h-14">
+      <div class="flex items-center gap-3">
+        <span class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">FocusFlow</span>
+        <nav class="hidden sm:flex items-center gap-1 ml-6">
+          <a href="index.html" class="px-3 py-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950 rounded-md">Timer</a>
+          <a href="stats.html" class="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Stats</a>
+        </nav>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="toggleDark()" class="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+        <button onclick="openSettings()" class="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+  
+  <main class="mx-auto max-w-5xl px-4 py-8 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)]">
+    <div class="relative animate-fade-in">
+      <!-- Timer Ring -->
+      <svg class="timer-ring" width="280" height="280">
+        <circle
+          cx="140"
+          cy="140"
+          r="70"
+          stroke="#e2e8f0"
+          stroke-width="12"
+          fill="none"
+          class="dark:stroke-slate-700"
+        />
+        <circle
+          id="progress-ring"
+          class="timer-ring-circle"
+          cx="140"
+          cy="140"
+          r="70"
+          stroke="#f43f5e"
+          stroke-width="12"
+          fill="none"
+          stroke-linecap="round"
+        />
+      </svg>
       
-      if (window.FocusFlow && window.FocusFlow.Sounds) {
-        window.FocusFlow.Sounds.init();
-      }
-    });
+      <!-- Timer Display -->
+      <div class="absolute inset-0 flex flex-col items-center justify-center">
+        <div class="text-7xl font-mono font-bold text-slate-900 dark:text-white" id="timer-display">25:00</div>
+        <div class="mt-2 flex items-center gap-2">
+          <span id="session-counter" class="px-2 py-1 text-xs font-semibold rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">0/4</span>
+          <span id="mode-indicator" class="px-3 py-1 text-sm font-semibold rounded-full bg-work-500 text-white">Work</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Timer Controls -->
+    <div class="flex items-center justify-center gap-6 mt-12 animate-fade-in stagger-1">
+      <button onclick="resetTimer()" class="p-3 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      </button>
+      <button id="play-pause-btn" onclick="toggleTimer()" class="p-5 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg hover:shadow-xl transition-all active:scale-95">
+        <svg id="play-icon" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <svg id="pause-icon" class="w-8 h-8 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </button>
+    </div>
+  </main>
+  
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="closeSettings()"></div>
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md p-6 animate-scale-in">
+        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Timer Settings</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Customize your focus sessions</p>
+        
+        <div class="mt-6 space-y-4">
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Work Duration (minutes)</label>
+            <input type="number" id="work-duration" min="1" max="60" value="25" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow" />
+          </div>
+          
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Short Break (minutes)</label>
+            <input type="number" id="short-break-duration" min="1" max="30" value="5" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow" />
+          </div>
+          
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Long Break (minutes)</label>
+            <input type="number" id="long-break-duration" min="1" max="60" value="15" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow" />
+          </div>
+          
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Sessions until Long Break</label>
+            <input type="number" id="sessions-until-long-break" min="2" max="10" value="4" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow" />
+          </div>
+        </div>
+        
+        <div class="flex justify-end gap-2 mt-6">
+          <button onclick="closeSettings()" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Cancel</button>
+          <button onclick="saveSettings()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm transition-all active:scale-95">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Toast Notification Container -->
+  <div id="toast" class="fixed bottom-4 right-4 z-50 hidden">
+    <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg animate-slide-up">
+      <svg class="w-5 h-5 text-emerald-400 dark:text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      <span class="text-sm font-medium" id="toast-msg">Action completed</span>
+    </div>
+  </div>
+  
+  <script src="app.js"></script>
+  <script>
+    // Dark mode toggle
+    function toggleDark() {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    }
+    
+    // Initialize dark mode
+    if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+    
+    // Settings modal
+    function openSettings() {
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+    
+    function closeSettings() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+    
+    // Timer controls (will be implemented in app.js)
+    function toggleTimer() {
+      // This will be implemented in app.js
+    }
+    
+    function resetTimer() {
+      // This will be implemented in app.js
+    }
+    
+    function saveSettings() {
+      // This will be implemented in app.js
+    }
   </script>
 </body>
 </html>
