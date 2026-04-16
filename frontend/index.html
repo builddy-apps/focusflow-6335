@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,244 +11,521 @@
       theme: {
         extend: {
           colors: {
-            primary: {
-              50: '#ffffff',
-              100: '#ccfbf1',
-              200: '#99f6e4',
-              300: '#5eead4',
-              400: '#2dd4bf',
-              500: '#14b8a6',
-              600: '#0d9488',
-              700: '#0f766e',
-              800: '#115e59',
-              900: '#134e4a',
-              950: '#042f2e'
-            },
-            work: {
-              50: '#fff1f2',
-              100: '#ffe4e6',
-              200: '#fecdd3',
-              300: '#fda4af',
-              400: '#fb7185',
-              500: '#f43f5e',
-              600: '#e11d48',
-              700: '#be123c',
-              800: '#9f1239',
-              900: '#881337',
-              950: '#4c0519'
-            },
-            break: {
-              50: '#f0fdf4',
-              100: '#dcfce7',
-              200: '#bbf7d0',
-              300: '#86efac',
-              400: '#4ade80',
-              500: '#22c55e',
-              600: '#16a34a',
-              700: '#15803d',
-              800: '#166534',
-              900: '#14532d',
-              950: '#052e16'
-            },
-            longBreak: {
-              50: '#eff6ff',
-              100: '#dbeafe',
-              200: '#bfdbfe',
-              300: '#93c5fd',
-              400: '#60a5fa',
-              500: '#3b82f6',
-              600: '#2563eb',
-              700: '#1d4ed8',
-              800: '#1e40af',
-              900: '#1e3a8a',
-              950: '#172554'
-            }
+            work: '#E8725C',
+            'work-hover': '#D5634D',
+            break: '#5CC5E8',
+            'break-hover': '#4AB4D9',
           }
         }
       }
     }
   </script>
   <style>
-    @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes scale-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-    @keyframes slide-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-    .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
-    .animate-scale-in { animation: scale-in 0.2s ease-out forwards; }
-    .animate-slide-up { animation: slide-up 0.3s ease-out forwards; }
-    .animate-shimmer { background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     
-    .timer-ring {
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #fda085 100%);
+      background-attachment: fixed;
+      min-height: 100vh;
+    }
+
+    .dark body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #533483 75%, #2c003e 100%);
+      background-attachment: fixed;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .dark .glass {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .dark .glass-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .glass-modal {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .dark .glass-modal {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .glass-button {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .glass-button:hover {
+      background: rgba(255, 255, 255, 0.35);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .dark .glass-button {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .dark .glass-button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .progress-ring-circle {
+      transition: stroke-dashoffset 0.35s;
       transform: rotate(-90deg);
       transform-origin: 50% 50%;
     }
-    
-    .timer-ring-circle {
-      transition: stroke-dashoffset 0.35s;
-      stroke-dasharray: 440;
-      stroke-dashoffset: 0;
+
+    .timer-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
-    
-    .bg-work-mode { background-color: #fff1f2; }
-    .dark .bg-work-mode { background-color: #881337; }
-    
-    .bg-break-mode { background-color: #f0fdf4; }
-    .dark .bg-break-mode { background-color: #14532d; }
-    
-    .bg-long-break-mode { background-color: #eff6ff; }
-    .dark .bg-long-break-mode { background-color: #1e3a8a; }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    .timer-complete {
+      animation: completePulse 0.6s ease-in-out 3;
+    }
+
+    @keyframes completePulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    .slide-over {
+      transform: translateX(100%);
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .slide-over.open {
+      transform: translateX(0);
+    }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .volume-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.3);
+      outline: none;
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: white;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .volume-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: white;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      border: none;
+    }
+
+    .shortcut-overlay {
+      animation: fadeIn 0.2s ease-in;
+    }
   </style>
 </head>
-<body class="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 bg-work-mode" id="app-body">
-  <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
-    <div class="mx-auto max-w-5xl flex items-center justify-between px-4 h-14">
-      <div class="flex items-center gap-3">
-        <span class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">FocusFlow</span>
-        <nav class="hidden sm:flex items-center gap-1 ml-6">
-          <a href="index.html" class="px-3 py-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950 rounded-md">Timer</a>
-          <a href="stats.html" class="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Stats</a>
-        </nav>
+<body class="min-h-screen text-gray-800 dark:text-gray-100 transition-colors duration-300">
+  <!-- Navigation -->
+  <nav class="glass fixed top-0 left-0 right-0 z-50 px-6 py-4">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-xl font-bold text-white">FocusFlow</span>
       </div>
-      <div class="flex items-center gap-2">
-        <button onclick="toggleDark()" class="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-          <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-          <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+      
+      <div class="flex items-center space-x-4">
+        <a href="index.html" class="text-white/90 hover:text-white font-medium transition-colors">Timer</a>
+        <a href="history.html" class="text-white/70 hover:text-white font-medium transition-colors">History</a>
+        <a href="analytics.html" class="text-white/70 hover:text-white font-medium transition-colors">Analytics</a>
+        <button id="theme-toggle" class="glass-button p-2 rounded-lg text-white" title="Toggle dark mode">
+          <svg id="theme-icon-light" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg id="theme-icon-dark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
         </button>
-        <button onclick="openSettings()" class="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <button id="shortcuts-btn" class="glass-button p-2 rounded-lg text-white" title="Keyboard shortcuts">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
         </button>
       </div>
     </div>
-  </header>
-  
-  <main class="mx-auto max-w-5xl px-4 py-8 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)]">
-    <div class="relative animate-fade-in">
-      <!-- Timer Ring -->
-      <svg class="timer-ring" width="280" height="280">
-        <circle
-          cx="140"
-          cy="140"
-          r="70"
-          stroke="#e2e8f0"
-          stroke-width="12"
-          fill="none"
-          class="dark:stroke-slate-700"
-        />
-        <circle
-          id="progress-ring"
-          class="timer-ring-circle"
-          cx="140"
-          cy="140"
-          r="70"
-          stroke="#f43f5e"
-          stroke-width="12"
-          fill="none"
-          stroke-linecap="round"
-        />
-      </svg>
-      
-      <!-- Timer Display -->
-      <div class="absolute inset-0 flex flex-col items-center justify-center">
-        <div class="text-7xl font-mono font-bold text-slate-900 dark:text-white" id="timer-display">25:00</div>
-        <div class="mt-2 flex items-center gap-2">
-          <span id="session-counter" class="px-2 py-1 text-xs font-semibold rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">0/4</span>
-          <span id="mode-indicator" class="px-3 py-1 text-sm font-semibold rounded-full bg-work-500 text-white">Work</span>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="max-w-4xl mx-auto px-6 pt-24 pb-12">
+    <!-- Mode Toggle -->
+    <div class="flex justify-center mb-8">
+      <div class="glass-card rounded-2xl p-1.5 inline-flex space-x-1">
+        <button id="mode-work" class="px-6 py-2.5 rounded-xl font-semibold text-white bg-work transition-all duration-300">
+          Work
+        </button>
+        <button id="mode-break" class="px-6 py-2.5 rounded-xl font-semibold text-white/70 hover:text-white transition-all duration-300">
+          Break
+        </button>
+      </div>
+    </div>
+
+    <!-- Timer Container -->
+    <div class="flex justify-center mb-10">
+      <div class="glass-card rounded-3xl p-10 relative">
+        <div id="timer-container" class="relative">
+          <svg class="w-72 h-72 md:w-80 md:h-80" viewBox="0 0 200 200">
+            <!-- Background circle -->
+            <circle
+              cx="100"
+              cy="100"
+              r="90"
+              fill="none"
+              stroke="rgba(255,255,255,0.2)"
+              stroke-width="8"
+            />
+            <!-- Progress circle -->
+            <circle
+              id="progress-ring"
+              cx="100"
+              cy="100"
+              r="90"
+              fill="none"
+              stroke="#E8725C"
+              stroke-width="8"
+              stroke-linecap="round"
+              stroke-dasharray="565.48"
+              stroke-dashoffset="0"
+              class="progress-ring-circle"
+            />
+          </svg>
+          
+          <!-- Time Display -->
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <div id="time-display" class="text-6xl md:text-7xl font-bold text-white tabular-nums tracking-tight">
+              25:00
+            </div>
+            <div id="session-label" class="text-white/70 text-sm font-medium mt-2 uppercase tracking-wider">
+              Work Session
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    
-    <!-- Timer Controls -->
-    <div class="flex items-center justify-center gap-6 mt-12 animate-fade-in stagger-1">
-      <button onclick="resetTimer()" class="p-3 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+
+    <!-- Controls -->
+    <div class="flex justify-center space-x-4 mb-10">
+      <button id="btn-reset" class="glass-button w-14 h-14 rounded-xl flex items-center justify-center text-white" title="Reset (R)">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
       </button>
-      <button id="play-pause-btn" onclick="toggleTimer()" class="p-5 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg hover:shadow-xl transition-all active:scale-95">
-        <svg id="play-icon" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        <svg id="pause-icon" class="w-8 h-8 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      
+      <button id="btn-start" class="glass-button w-20 h-20 rounded-2xl flex items-center justify-center text-white bg-work hover:bg-work-hover border-work/50" title="Start (Space)">
+        <svg id="icon-play" class="w-8 h-8 ml-1" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M8 5v14l11-7z" />
+        </svg>
+        <svg id="icon-pause" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+        </svg>
       </button>
+      
+      <button id="btn-skip" class="glass-button w-14 h-14 rounded-xl flex items-center justify-center text-white" title="Skip (S)">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Bottom Panels -->
+    <div class="grid md:grid-cols-2 gap-6">
+      <!-- Ambient Sounds -->
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-white">Ambient Sounds</h3>
+          <button id="sound-settings-btn" class="text-white/60 hover:text-white transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+        </div>
+        
+        <div class="space-y-3" id="sound-buttons">
+          <button data-sound="rain" class="sound-btn glass-button w-full px-4 py-3 rounded-xl flex items-center justify-between text-white">
+            <div class="flex items-center space-x-3">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+              </svg>
+              <span class="font-medium">Rain</span>
+            </div>
+            <span class="sound-status text-xs opacity-60">Off</span>
+          </button>
+          
+          <button data-sound="cafe" class="sound-btn glass-button w-full px-4 py-3 rounded-xl flex items-center justify-between text-white">
+            <div class="flex items-center space-x-3">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+              <span class="font-medium">Café</span>
+            </div>
+            <span class="sound-status text-xs opacity-60">Off</span>
+          </button>
+          
+          <button data-sound="whitenoise" class="sound-btn glass-button w-full px-4 py-3 rounded-xl flex items-center justify-between text-white">
+            <div class="flex items-center space-x-3">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              <span class="font-medium">White Noise</span>
+            </div>
+            <span class="sound-status text-xs opacity-60">Off</span>
+          </button>
+        </div>
+        
+        <div class="mt-4">
+          <label class="text-sm text-white/70 mb-2 block">Volume</label>
+          <input id="volume-slider" type="range" min="0" max="100" value="50" class="volume-slider w-full">
+        </div>
+      </div>
+
+      <!-- Session Stats -->
+      <div class="glass-card rounded-2xl p-6">
+        <h3 class="text-lg font-semibold text-white mb-4">Today's Progress</h3>
+        
+        <div class="space-y-4">
+          <div class="flex justify-between items-center">
+            <span class="text-white/70">Sessions Completed</span>
+            <span id="stat-sessions" class="text-2xl font-bold text-white">0</span>
+          </div>
+          
+          <div class="flex justify-between items-center">
+            <span class="text-white/70">Focus Time</span>
+            <span id="stat-focus-time" class="text-2xl font-bold text-white">0m</span>
+          </div>
+          
+          <div class="flex justify-between items-center">
+            <span class="text-white/70">Current Streak</span>
+            <span id="stat-streak" class="text-2xl font-bold text-white">0 days</span>
+          </div>
+          
+          <div class="mt-6 pt-4 border-t border-white/20">
+            <div class="flex justify-between items-center">
+              <span class="text-white/70">Work Duration</span>
+              <span id="stat-work-dur" class="text-white font-medium">25 min</span>
+            </div>
+            <div class="flex justify-between items-center mt-2">
+              <span class="text-white/70">Break Duration</span>
+              <span id="stat-break-dur" class="text-white font-medium">5 min</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
-  
+
   <!-- Settings Modal -->
-  <div id="settings-modal" class="fixed inset-0 z-50 hidden">
-    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="closeSettings()"></div>
-    <div class="fixed inset-0 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md p-6 animate-scale-in">
-        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Timer Settings</h2>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Customize your focus sessions</p>
-        
-        <div class="mt-6 space-y-4">
-          <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Work Duration (minutes)</label>
-            <input type="number" id="work-duration" min="1" max="60" value="25" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow" />
-          </div>
+  <div id="settings-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden">
+    <div class="absolute inset-0" id="settings-backdrop"></div>
+    
+    <div id="settings-panel" class="slide-over absolute right-0 top-0 bottom-0 w-full max-w-md glass-modal p-8 overflow-y-auto">
+      <div class="flex items-center justify-between mb-8">
+        <h2 class="text-2xl font-bold text-white">Settings</h2>
+        <button id="settings-close" class="text-white/60 hover:text-white transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-8">
+        <!-- Timer Durations -->
+        <div>
+          <h3 class="text-lg font-semibold text-white mb-4">Timer Durations</h3>
           
-          <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Short Break (minutes)</label>
-            <input type="number" id="short-break-duration" min="1" max="30" value="5" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow" />
-          </div>
-          
-          <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Long Break (minutes)</label>
-            <input type="number" id="long-break-duration" min="1" max="60" value="15" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow" />
-          </div>
-          
-          <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Sessions until Long Break</label>
-            <input type="number" id="sessions-until-long-break" min="2" max="10" value="4" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow" />
+          <div class="space-y-4">
+            <div>
+              <label class="text-sm text-white/70 mb-2 block">Work Duration (minutes)</label>
+              <input id="setting-work" type="number" min="1" max="90" value="25" 
+                class="w-full glass-button rounded-xl px-4 py-3 text-white bg-transparent border-white/30 focus:border-white focus:outline-none">
+            </div>
+            
+            <div>
+              <label class="text-sm text-white/70 mb-2 block">Break Duration (minutes)</label>
+              <input id="setting-break" type="number" min="1" max="30" value="5"
+                class="w-full glass-button rounded-xl px-4 py-3 text-white bg-transparent border-white/30 focus:border-white focus:outline-none">
+            </div>
           </div>
         </div>
+
+        <!-- Auto-start -->
+        <div>
+          <h3 class="text-lg font-semibold text-white mb-4">Automation</h3>
+          
+          <div class="space-y-3">
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-white/90">Auto-start breaks</span>
+              <input id="setting-auto-break" type="checkbox" checked class="w-5 h-5 rounded">
+            </label>
+            
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-white/90">Auto-start work</span>
+              <input id="setting-auto-work" type="checkbox" class="w-5 h-5 rounded">
+            </label>
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div>
+          <h3 class="text-lg font-semibold text-white mb-4">Notifications</h3>
+          
+          <div class="space-y-3">
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-white/90">Sound notifications</span>
+              <input id="setting-sound-notif" type="checkbox" checked class="w-5 h-5 rounded">
+            </label>
+            
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-white/90">Browser notifications</span>
+              <input id="setting-browser-notif" type="checkbox" class="w-5 h-5 rounded">
+            </label>
+          </div>
+        </div>
+
+        <!-- Save Button -->
+        <button id="settings-save" class="w-full py-3 rounded-xl font-semibold text-white bg-work hover:bg-work-hover transition-colors">
+          Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keyboard Shortcuts Overlay -->
+  <div id="shortcuts-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-md z-50 hidden flex items-center justify-center shortcut-overlay">
+    <div class="glass-modal rounded-2xl p-8 max-w-md w-full mx-4">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-white">Keyboard Shortcuts</h2>
+        <button id="shortcuts-close" class="text-white/60 hover:text-white transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      <div class="space-y-3">
+        <div class="flex justify-between items-center py-2">
+          <span class="text-white/90">Start / Pause</span>
+          <kbd class="glass px-3 py-1 rounded-lg text-sm font-mono text-white">Space</kbd>
+        </div>
         
-        <div class="flex justify-end gap-2 mt-6">
-          <button onclick="closeSettings()" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Cancel</button>
-          <button onclick="saveSettings()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm transition-all active:scale-95">Save</button>
+        <div class="flex justify-between items-center py-2">
+          <span class="text-white/90">Reset Timer</span>
+          <kbd class="glass px-3 py-1 rounded-lg text-sm font-mono text-white">R</kbd>
+        </div>
+        
+        <div class="flex justify-between items-center py-2">
+          <span class="text-white/90">Skip Session</span>
+          <kbd class="glass px-3 py-1 rounded-lg text-sm font-mono text-white">S</kbd>
+        </div>
+        
+        <div class="flex justify-between items-center py-2">
+          <span class="text-white/90">Toggle Dark Mode</span>
+          <kbd class="glass px-3 py-1 rounded-lg text-sm font-mono text-white">D</kbd>
+        </div>
+        
+        <div class="flex justify-between items-center py-2">
+          <span class="text-white/90">Toggle Sound</span>
+          <kbd class="glass px-3 py-1 rounded-lg text-sm font-mono text-white">M</kbd>
         </div>
       </div>
     </div>
   </div>
-  
-  <!-- Toast Notification Container -->
-  <div id="toast" class="fixed bottom-4 right-4 z-50 hidden">
-    <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg animate-slide-up">
-      <svg class="w-5 h-5 text-emerald-400 dark:text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-      <span class="text-sm font-medium" id="toast-msg">Action completed</span>
-    </div>
-  </div>
-  
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-3"></div>
+
+  <!-- Scripts -->
   <script src="app.js"></script>
+  <script src="sounds.js"></script>
+  <script src="timer.js"></script>
   <script>
-    // Dark mode toggle
-    function toggleDark() {
-      document.documentElement.classList.toggle('dark');
-      localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-    }
-    
-    // Initialize dark mode
-    if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    }
-    
-    // Settings modal
-    function openSettings() {
-      document.getElementById('settings-modal').classList.remove('hidden');
-    }
-    
-    function closeSettings() {
-      document.getElementById('settings-modal').classList.add('hidden');
-    }
-    
-    // Timer controls (will be implemented in app.js)
-    function toggleTimer() {
-      // This will be implemented in app.js
-    }
-    
-    function resetTimer() {
-      // This will be implemented in app.js
-    }
-    
-    function saveSettings() {
-      // This will be implemented in app.js
-    }
+    // Initialize timer when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.FocusFlow && window.FocusFlow.Timer) {
+        window.FocusFlow.Timer.init();
+      }
+      
+      if (window.FocusFlow && window.FocusFlow.Sounds) {
+        window.FocusFlow.Sounds.init();
+      }
+    });
   </script>
 </body>
 </html>
