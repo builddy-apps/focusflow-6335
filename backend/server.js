@@ -1,238 +1,127 @@
 import express from 'express';
 import cors from 'cors';
-import { db, createSession, getSessions, getDailyStats, getWeeklyStats, getSettings, updateSettings } from './db.js';
+import {
+  createSession,
+  getSessions,
+  getSessionsByDateRange,
+  getDailyStats,
+  getWeeklyStats,
+  getCalendarData,
+  exportSessionsCSV
+} from './db.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static('frontend'));
 
-// Request logging middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.path}`);
   next();
 });
 
-// API Routes
-
-// GET /api/sessions - with optional limit and offset query params
-app.get('/api/sessions', async (req, res) => {
+app.post('/api/sessions', (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 20;
-    const offset = parseInt(req.query.offset) || 0;
+    const { type, duration_planned, duration_actual, completed, started_at, completed_at } = req.body;
     
-    const result = getSessions(limit, offset);
-    
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
-      res.status(500).json({ success: false, error: result.error });
-    }
-  } catch (error) {
-    console.error('Error in /api/sessions GET:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-});
-
-// POST /api/sessions - creates session and updates daily_stats
-app.post('/api/sessions', async (req, res) => {
-  try {
-    const { type, duration_minutes } = req.body;
-    
-    if (!type || !duration_minutes) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Missing required fields: type and duration_minutes' 
-      });
+    if (!type || !duration_planned) {
+      return res.status(400).json({ success: false, error: 'type and duration_planned are required' });
     }
     
-    if (!['work', 'short_break', 'long_break'].includes(type)) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Invalid session type. Must be one of: work, short_break, long_break' 
-      });
+    if (type !== 'work' && type !== 'break') {
+      return res.status(400).json({ success: false, error: 'type must be "work" or "break"' });
     }
     
-    const result = createSession(type, duration_minutes);
-    
-    if (result.success) {
-      res.status(201).json({ success: true, data: { id: result.id } });
-    } else {
-      res.status(500).json({ success: false, error: result.error });
-    }
-  } catch (error) {
-    console.error('Error in /api/sessions POST:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-});
-
-// GET /api/stats/daily?date=YYYY-MM-DD
-app.get('/api/stats/daily', async (req, res) => {
-  try {
-    const { date } = req.query;
-    
-    if (!date) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Missing required query parameter: date' 
-      });
-    }
-    
-    // Validate date format (YYYY-MM-DD)
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Invalid date format. Must be YYYY-MM-DD' 
-      });
-    }
-    
-    const result = getDailyStats(date);
-    
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
-      res.status(500).json({ success: false, error: result.error });
-    }
-  } catch (error) {
-    console.error('Error in /api/stats/daily GET:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-});
-
-// GET /api/stats/weekly - returns last 7 days
-app.get('/api/stats/weekly', async (req, res) => {
-  try {
-    // Calculate start date (7 days ago)
-    const today = new Date();
-    const startDate = new Date(today);
-    startDate.setDate(today.getDate() - 7);
-    const startDateString = startDate.toISOString().split('T')[0];
-    
-    const result = getWeeklyStats(startDateString);
-    
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
-      res.status(500).json({ success: false, error: result.error });
-    }
-  } catch (error) {
-    console.error('Error in /api/stats/weekly GET:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-});
-
-// GET /api/settings
-app.get('/api/settings', async (req, res) => {
-  try {
-    const result = getSettings();
-    
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
-      res.status(500).json({ success: false, error: result.error });
-    }
-  } catch (error) {
-    console.error('Error in /api/settings GET:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-});
-
-// PUT /api/settings
-app.put('/api/settings', async (req, res) => {
-  try {
-    const { 
-      work_duration, 
-      short_break_duration, 
-      long_break_duration, 
-      sessions_until_long_break,
-      sound_enabled,
-      notifications_enabled
-    } = req.body;
-    
-    // Validate required fields
-    if (
-      work_duration === undefined || 
-      short_break_duration === undefined || 
-      long_break_duration === undefined || 
-      sessions_until_long_break === undefined ||
-      sound_enabled === undefined ||
-      notifications_enabled === undefined
-    ) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Missing required fields' 
-      });
-    }
-    
-    // Validate numeric fields
-    if (
-      typeof work_duration !== 'number' || 
-      typeof short_break_duration !== 'number' || 
-      typeof long_break_duration !== 'number' || 
-      typeof sessions_until_long_break !== 'number'
-    ) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Duration fields must be numbers' 
-      });
-    }
-    
-    // Validate boolean fields
-    if (
-      typeof sound_enabled !== 'boolean' && 
-      (sound_enabled !== 0 && sound_enabled !== 1)
-    ) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'sound_enabled must be a boolean or 0/1' 
-      });
-    }
-    
-    if (
-      typeof notifications_enabled !== 'boolean' && 
-      (notifications_enabled !== 0 && notifications_enabled !== 1)
-    ) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'notifications_enabled must be a boolean or 0/1' 
-      });
-    }
-    
-    const result = updateSettings({
-      work_duration,
-      short_break_duration,
-      long_break_duration,
-      sessions_until_long_break,
-      sound_enabled: sound_enabled ? 1 : 0,
-      notifications_enabled: notifications_enabled ? 1 : 0
+    const session = createSession({
+      type,
+      duration_planned: parseInt(duration_planned),
+      duration_actual: duration_actual ? parseInt(duration_actual) : 0,
+      completed: !!completed,
+      started_at: started_at || null,
+      completed_at: completed_at || null
     });
     
-    if (result.success) {
-      res.json({ success: true });
-    } else {
-      res.status(500).json({ success: false, error: result.error });
-    }
-  } catch (error) {
-    console.error('Error in /api/settings PUT:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    res.json({ success: true, data: session });
+  } catch (err) {
+    console.error('Error creating session:', err);
+    res.status(500).json({ success: false, error: 'Failed to create session' });
   }
 });
 
-// 404 handler for unknown routes
-app.use((req, res) => {
-  res.status(404).json({ success: false, error: 'Route not found' });
+app.get('/api/sessions', (req, res) => {
+  try {
+    const { startDate, endDate, type, limit = 50, offset = 0 } = req.query;
+    
+    if (startDate && endDate) {
+      const sessions = getSessionsByDateRange(startDate, endDate, type || null);
+      res.json({ success: true, data: sessions });
+    } else {
+      const sessions = getSessions(parseInt(limit), parseInt(offset));
+      res.json({ success: true, data: sessions });
+    }
+  } catch (err) {
+    console.error('Error fetching sessions:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch sessions' });
+  }
 });
 
-// Global error handler
+app.get('/api/sessions/stats', (req, res) => {
+  try {
+    const { period, date } = req.query;
+    
+    if (period === 'weekly') {
+      const stats = getWeeklyStats(date || null);
+      res.json({ success: true, data: stats });
+    } else {
+      const stats = getDailyStats(date || null);
+      res.json({ success: true, data: stats });
+    }
+  } catch (err) {
+    console.error('Error fetching stats:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch stats' });
+  }
+});
+
+app.get('/api/sessions/calendar', (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const calendarData = getCalendarData(startDate || null, endDate || null);
+    res.json({ success: true, data: calendarData });
+  } catch (err) {
+    console.error('Error fetching calendar data:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch calendar data' });
+  }
+});
+
+app.get('/api/sessions/export', (req, res) => {
+  try {
+    const csv = exportSessionsCSV();
+    
+    if (!csv) {
+      return res.status(404).json({ success: false, error: 'No sessions to export' });
+    }
+    
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="focusflow-sessions-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.send(csv);
+  } catch (err) {
+    console.error('Error exporting sessions:', err);
+    res.status(500).json({ success: false, error: 'Failed to export sessions' });
+  }
+});
+
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ success: false, error: 'Internal server error' });
 });
 
-// Start server
+app.use((req, res) => {
+  res.status(404).json({ success: false, error: 'Route not found' });
+});
+
 app.listen(PORT, () => {
-  console.log(`FocusFlow server running on port ${PORT}`);
+  console.log(`FocusFlow server running on http://localhost:${PORT}`);
 });
