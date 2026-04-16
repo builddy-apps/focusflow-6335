@@ -1,22 +1,23 @@
 # FocusFlow
 
-A beautiful Pomodoro timer app with session tracking, analytics, streak calendar, and ambient sounds for rewarding focus sessions.
+A calming Pomodoro timer that helps you build focus, one session at a time.
 
 Built with [Builddy](https://builddy.app) — AI-powered app builder using GLM 5.1.
 
 ## Features
 
-- Animated circular countdown timer with smooth 60fps progress ring
-- Work/break mode auto-toggling with customizable durations
-- Session history log with filters and timestamps
-- Visual streak calendar heatmap for daily productivity
-- Daily and weekly statistics dashboard
-- Ambient background sounds (rain, café, white noise)
-- Notification sounds for session transitions
-- Dark mode with smooth theme transitions
-- Keyboard shortcuts (Space, R, S)
-- CSV export for session data
-- Settings persistence with localStorage
+- Circular progress timer with smooth SVG ring animation
+- Work/break mode transitions with calming color palette shifts
+- Session counter tracking completed pomodoros with auto long-break scheduling
+- Start/pause/reset controls with confirmation dialogs
+- Audio chime and browser notifications on session completion
+- Tab title updates showing remaining time
+- Daily and weekly productivity statistics with visual charts
+- Session history log with timestamps and duration
+- Streak tracking for consecutive productive days
+- Customizable timer durations via settings modal
+- Dark mode with persistent preference
+- Toast notifications for user feedback
 
 ## Quick Start
 
