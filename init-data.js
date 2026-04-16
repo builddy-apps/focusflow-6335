@@ -1,204 +1,380 @@
 import Database from 'better-sqlite3';
 import fs from 'fs';
+import path from 'path';
 
-// Create data directory if it doesn't exist
-if (!fs.existsSync('./data')) {
-  fs.mkdirSync('./data', { recursive: true });
+const dataDir = path.join(process.cwd(), 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
 }
 
-// Initialize database connection
-const db = new Database('./data/app.db');
+const db = new Database(path.join(dataDir, 'app.db'));
+db.pragma('journal_mode = WAL');
 
 // Check if data already exists
 const count = db.prepare('SELECT COUNT(*) as count FROM sessions').get();
 if (count.count > 0) {
   console.log('Data already seeded, skipping...');
-  db.close();
   process.exit(0);
 }
 
-// Helper function to generate random time offset within a day
-function getRandomTimeInDay(baseDate, hourRange = { min: 8, max: 22 }) {
-  const date = new Date(baseDate);
-  const hour = Math.floor(Math.random() * (hourRange.max - hourRange.min)) + hourRange.min;
-  const minute = Math.floor(Math.random() * 60);
-  const second = Math.floor(Math.random() * 60);
-  date.setHours(hour, minute, second, 0);
-  return date;
-}
-
-// Helper function to format date as YYYY-MM-DD
-function formatDate(date) {
-  return date.toISOString().split('T')[0];
-}
-
-// Helper function to format datetime for SQLite
-function formatDateTime(date) {
-  return date.toISOString().replace('T', ' ').substring(0, 19);
-}
+// Helper function to generate timestamps
+const daysAgo = (days) => new Date(Date.now() - days * 86400000);
+const addMinutes = (date, minutes) => new Date(date.getTime() + minutes * 60000);
+const addSeconds = (date, seconds) => new Date(date.getTime() + seconds * 1000);
 
 // Generate realistic session data
 const sessions = [];
-const dailyStatsMap = new Map();
 
-// Define activity patterns - some days are more productive than others
-const activityPattern = [
-  { daysAgo: 0, sessions: 3, workMinutes: [25, 25, 20] },      // Today
-  { daysAgo: 1, sessions: 5, workMinutes: [25, 30, 25, 25, 20] }, // Yesterday (productive)
-  { daysAgo: 2, sessions: 2, workMinutes: [25, 25] },          // 2 days ago
-  { daysAgo: 3, sessions: 0 },                                  // Rest day
-  { daysAgo: 4, sessions: 4, workMinutes: [25, 25, 30, 25] },  // 4 days ago
-  { daysAgo: 5, sessions: 6, workMinutes: [25, 25, 25, 25, 30, 25] }, // Very productive
-  { daysAgo: 6, sessions: 3, workMinutes: [20, 25, 25] },      // 6 days ago
-  { daysAgo: 7, sessions: 1, workMinutes: [25] },              // 7 days ago
-  { daysAgo: 8, sessions: 4, workMinutes: [25, 25, 25, 20] },  // 8 days ago
-  { daysAgo: 9, sessions: 0 },                                  // Rest day
-  { daysAgo: 10, sessions: 5, workMinutes: [30, 25, 25, 25, 25] }, // 10 days ago
-  { daysAgo: 11, sessions: 3, workMinutes: [25, 20, 25] },     // 11 days ago
-  { daysAgo: 12, sessions: 2, workMinutes: [25, 25] },         // 12 days ago
-  { daysAgo: 13, sessions: 0 },                                 // Rest day
-  { daysAgo: 14, sessions: 4, workMinutes: [25, 25, 25, 30] }, // 14 days ago
-  { daysAgo: 15, sessions: 6, workMinutes: [25, 25, 25, 25, 25, 25] }, // Very productive
-  { daysAgo: 16, sessions: 3, workMinutes: [20, 25, 25] },     // 16 days ago
-  { daysAgo: 17, sessions: 1, workMinutes: [25] },             // 17 days ago
-  { daysAgo: 18, sessions: 0 },                                 // Rest day
-  { daysAgo: 19, sessions: 4, workMinutes: [25, 30, 25, 25] }, // 19 days ago
-  { daysAgo: 20, sessions: 5, workMinutes: [25, 25, 25, 20, 25] }, // 20 days ago
-  { daysAgo: 21, sessions: 2, workMinutes: [25, 25] },         // 21 days ago
-  { daysAgo: 22, sessions: 3, workMinutes: [25, 25, 30] },     // 22 days ago
-  { daysAgo: 23, sessions: 0 },                                 // Rest day
-  { daysAgo: 24, sessions: 4, workMinutes: [25, 25, 25, 25] }, // 24 days ago
-  { daysAgo: 25, sessions: 2, workMinutes: [20, 25] },         // 25 days ago
-  { daysAgo: 26, sessions: 3, workMinutes: [25, 25, 25] },     // 26 days ago
-  { daysAgo: 27, sessions: 1, workMinutes: [25] },             // 27 days ago
-  { daysAgo: 28, sessions: 0 },                                 // Rest day
-  { daysAgo: 29, sessions: 3, workMinutes: [25, 30, 25] },     // 29 days ago
-];
-
-// Generate sessions based on activity pattern
-activityPattern.forEach(day => {
-  if (day.sessions === 0) return;
-  
-  const baseDate = new Date(Date.now() - day.daysAgo * 86400000);
-  const dateStr = formatDate(baseDate);
-  
-  let workCount = 0;
-  let totalFocusMinutes = 0;
-  let breaksTaken = 0;
-  
-  // Create sessions for this day
-  for (let i = 0; i < day.sessions; i++) {
-    const workDuration = day.workMinutes[i] || 25;
-    const sessionTime = getRandomTimeInDay(baseDate);
-    
-    // Add work session
-    sessions.push({
-      type: 'work',
-      duration_minutes: workDuration,
-      completed_at: formatDateTime(sessionTime),
-      created_at: formatDateTime(sessionTime)
-    });
-    
-    workCount++;
-    totalFocusMinutes += workDuration;
-    
-    // After every 4 work sessions, add a long break
-    // Otherwise, add a short break after each work session (but not the last one of the day)
-    if ((i + 1) % 4 === 0 && i < day.sessions - 1) {
-      const breakTime = new Date(sessionTime.getTime() + workDuration * 60000 + 60000);
-      sessions.push({
-        type: 'long_break',
-        duration_minutes: 15,
-        completed_at: formatDateTime(breakTime),
-        created_at: formatDateTime(breakTime)
-      });
-      breaksTaken++;
-    } else if (i < day.sessions - 1 && Math.random() > 0.3) {
-      // 70% chance of taking a short break between sessions
-      const breakTime = new Date(sessionTime.getTime() + workDuration * 60000 + 60000);
-      sessions.push({
-        type: 'short_break',
-        duration_minutes: 5,
-        completed_at: formatDateTime(breakTime),
-        created_at: formatDateTime(breakTime)
-      });
-      breaksTaken++;
-    }
-  }
-  
-  // Store daily stats
-  dailyStatsMap.set(dateStr, {
-    date: dateStr,
-    work_sessions: workCount,
-    total_focus_minutes: totalFocusMinutes,
-    breaks_taken: breaksTaken,
-    streak_day: 1
-  });
+// Today's sessions (5 sessions - a productive day)
+const today = new Date();
+sessions.push({
+  type: 'work',
+  duration_planned: 1500, // 25 min
+  duration_actual: 1485,  // slightly under
+  completed: 1,
+  started_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0, 0).toISOString(),
+  completed_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 24, 45).toISOString(),
+  created_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0, 0).toISOString(),
+  updated_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 24, 45).toISOString()
 });
 
-// Sort sessions by completed_at
-sessions.sort((a, b) => new Date(a.completed_at) - new Date(b.completed_at));
+sessions.push({
+  type: 'break',
+  duration_planned: 300, // 5 min
+  duration_actual: 300,
+  completed: 1,
+  started_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 25, 0).toISOString(),
+  completed_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 30, 0).toISOString(),
+  created_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 25, 0).toISOString(),
+  updated_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 30, 0).toISOString()
+});
 
-// Insert all data in a transaction
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 1500,
+  completed: 1,
+  started_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 35, 0).toISOString(),
+  completed_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 0, 0).toISOString(),
+  created_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 35, 0).toISOString(),
+  updated_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 0, 0).toISOString()
+});
+
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 720, // Abandoned after 12 min
+  completed: 0,
+  started_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 15, 0).toISOString(),
+  completed_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 27, 0).toISOString(),
+  created_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 15, 0).toISOString(),
+  updated_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 27, 0).toISOString()
+});
+
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 1505, // Slightly over
+  completed: 1,
+  started_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 0, 0).toISOString(),
+  completed_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 25, 5).toISOString(),
+  created_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 0, 0).toISOString(),
+  updated_at: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 25, 5).toISOString()
+});
+
+// Yesterday's sessions (4 sessions)
+const yesterday = daysAgo(1);
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 1500,
+  completed: 1,
+  started_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 8, 30, 0).toISOString(),
+  completed_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 8, 55, 0).toISOString(),
+  created_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 8, 30, 0).toISOString(),
+  updated_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 8, 55, 0).toISOString()
+});
+
+sessions.push({
+  type: 'break',
+  duration_planned: 300,
+  duration_actual: 310,
+  completed: 1,
+  started_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 8, 55, 0).toISOString(),
+  completed_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 9, 0, 10).toISOString(),
+  created_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 8, 55, 0).toISOString(),
+  updated_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 9, 0, 10).toISOString()
+});
+
+sessions.push({
+  type: 'work',
+  duration_planned: 1800, // 30 min session
+  duration_actual: 1800,
+  completed: 1,
+  started_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 11, 0, 0).toISOString(),
+  completed_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 11, 30, 0).toISOString(),
+  created_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 11, 0, 0).toISOString(),
+  updated_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 11, 30, 0).toISOString()
+});
+
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 1500,
+  completed: 1,
+  started_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 15, 45, 0).toISOString(),
+  completed_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 16, 10, 0).toISOString(),
+  created_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 15, 45, 0).toISOString(),
+  updated_at: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 16, 10, 0).toISOString()
+});
+
+// 2 days ago (3 sessions)
+const twoDaysAgo = daysAgo(2);
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 1490,
+  completed: 1,
+  started_at: new Date(twoDaysAgo.getFullYear(), twoDaysAgo.getMonth(), twoDaysAgo.getDate(), 10, 0, 0).toISOString(),
+  completed_at: new Date(twoDaysAgo.getFullYear(), twoDaysAgo.getMonth(), twoDaysAgo.getDate(), 10, 24, 50).toISOString(),
+  created_at: new Date(twoDaysAgo.getFullYear(), twoDaysAgo.getMonth(), twoDaysAgo.getDate(), 10, 0, 0).toISOString(),
+  updated_at: new Date(twoDaysAgo.getFullYear(), twoDaysAgo.getMonth(), twoDaysAgo.getDate(), 10, 24, 50).toISOString()
+});
+
+sessions.push({
+  type: 'break',
+  duration_planned: 900, // 15 min long break
+  duration_actual: 900,
+  completed: 1,
+  started_at: new Date(twoDaysAgo.getFullYear(), twoDaysAgo.getMonth(), twoDaysAgo.getDate(), 10, 30, 0).toISOString(),
+  completed_at: new Date(twoDaysAgo.getFullYear(), twoDaysAgo.getMonth(), twoDaysAgo.getDate(), 10, 45, 0).toISOString(),
+  created_at: new Date(twoDaysAgo.getFullYear(), twoDaysAgo.getMonth(), twoDaysAgo.getDate(), 10, 30, 0).toISOString(),
+  updated_at: new Date(twoDaysAgo.getFullYear(), twoDaysAgo.getMonth(), twoDaysAgo.getDate(), 10, 45, 0).toISOString()
+});
+
+sessions.push({
+  type: 'work',
+  duration_planned: 1200, // 20 min session
+  duration_actual: 1200,
+  completed: 1,
+  started_at: new Date(twoDaysAgo.getFullYear(), twoDaysAgo.getMonth(), twoDaysAgo.getDate(), 13, 15, 0).toISOString(),
+  completed_at: new Date(twoDaysAgo.getFullYear(), twoDaysAgo.getMonth(), twoDaysAgo.getDate(), 13, 35, 0).toISOString(),
+  created_at: new Date(twoDaysAgo.getFullYear(), twoDaysAgo.getMonth(), twoDaysAgo.getDate(), 13, 15, 0).toISOString(),
+  updated_at: new Date(twoDaysAgo.getFullYear(), twoDaysAgo.getMonth(), twoDaysAgo.getDate(), 13, 35, 0).toISOString()
+});
+
+// 3 days ago (4 sessions)
+const threeDaysAgo = daysAgo(3);
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 1500,
+  completed: 1,
+  started_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 9, 0, 0).toISOString(),
+  completed_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 9, 25, 0).toISOString(),
+  created_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 9, 0, 0).toISOString(),
+  updated_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 9, 25, 0).toISOString()
+});
+
+sessions.push({
+  type: 'break',
+  duration_planned: 300,
+  duration_actual: 300,
+  completed: 1,
+  started_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 9, 25, 0).toISOString(),
+  completed_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 9, 30, 0).toISOString(),
+  created_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 9, 25, 0).toISOString(),
+  updated_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 9, 30, 0).toISOString()
+});
+
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 1500,
+  completed: 1,
+  started_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 9, 35, 0).toISOString(),
+  completed_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 10, 0, 0).toISOString(),
+  created_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 9, 35, 0).toISOString(),
+  updated_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 10, 0, 0).toISOString()
+});
+
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 450, // Abandoned after 7.5 min
+  completed: 0,
+  started_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 14, 0, 0).toISOString(),
+  completed_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 14, 7, 30).toISOString(),
+  created_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 14, 0, 0).toISOString(),
+  updated_at: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate(), 14, 7, 30).toISOString()
+});
+
+// 5 days ago (3 sessions)
+const fiveDaysAgo = daysAgo(5);
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 1510,
+  completed: 1,
+  started_at: new Date(fiveDaysAgo.getFullYear(), fiveDaysAgo.getMonth(), fiveDaysAgo.getDate(), 11, 0, 0).toISOString(),
+  completed_at: new Date(fiveDaysAgo.getFullYear(), fiveDaysAgo.getMonth(), fiveDaysAgo.getDate(), 11, 25, 10).toISOString(),
+  created_at: new Date(fiveDaysAgo.getFullYear(), fiveDaysAgo.getMonth(), fiveDaysAgo.getDate(), 11, 0, 0).toISOString(),
+  updated_at: new Date(fiveDaysAgo.getFullYear(), fiveDaysAgo.getMonth(), fiveDaysAgo.getDate(), 11, 25, 10).toISOString()
+});
+
+sessions.push({
+  type: 'break',
+  duration_planned: 300,
+  duration_actual: 300,
+  completed: 1,
+  started_at: new Date(fiveDaysAgo.getFullYear(), fiveDaysAgo.getMonth(), fiveDaysAgo.getDate(), 11, 30, 0).toISOString(),
+  completed_at: new Date(fiveDaysAgo.getFullYear(), fiveDaysAgo.getMonth(), fiveDaysAgo.getDate(), 11, 35, 0).toISOString(),
+  created_at: new Date(fiveDaysAgo.getFullYear(), fiveDaysAgo.getMonth(), fiveDaysAgo.getDate(), 11, 30, 0).toISOString(),
+  updated_at: new Date(fiveDaysAgo.getFullYear(), fiveDaysAgo.getMonth(), fiveDaysAgo.getDate(), 11, 35, 0).toISOString()
+});
+
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 1500,
+  completed: 1,
+  started_at: new Date(fiveDaysAgo.getFullYear(), fiveDaysAgo.getMonth(), fiveDaysAgo.getDate(), 16, 0, 0).toISOString(),
+  completed_at: new Date(fiveDaysAgo.getFullYear(), fiveDaysAgo.getMonth(), fiveDaysAgo.getDate(), 16, 25, 0).toISOString(),
+  created_at: new Date(fiveDaysAgo.getFullYear(), fiveDaysAgo.getMonth(), fiveDaysAgo.getDate(), 16, 0, 0).toISOString(),
+  updated_at: new Date(fiveDaysAgo.getFullYear(), fiveDaysAgo.getMonth(), fiveDaysAgo.getDate(), 16, 25, 0).toISOString()
+});
+
+// 7 days ago (2 sessions)
+const sevenDaysAgo = daysAgo(7);
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 1500,
+  completed: 1,
+  started_at: new Date(sevenDaysAgo.getFullYear(), sevenDaysAgo.getMonth(), sevenDaysAgo.getDate(), 10, 0, 0).toISOString(),
+  completed_at: new Date(sevenDaysAgo.getFullYear(), sevenDaysAgo.getMonth(), sevenDaysAgo.getDate(), 10, 25, 0).toISOString(),
+  created_at: new Date(sevenDaysAgo.getFullYear(), sevenDaysAgo.getMonth(), sevenDaysAgo.getDate(), 10, 0, 0).toISOString(),
+  updated_at: new Date(sevenDaysAgo.getFullYear(), sevenDaysAgo.getMonth(), sevenDaysAgo.getDate(), 10, 25, 0).toISOString()
+});
+
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 600, // Abandoned after 10 min
+  completed: 0,
+  started_at: new Date(sevenDaysAgo.getFullYear(), sevenDaysAgo.getMonth(), sevenDaysAgo.getDate(), 14, 30, 0).toISOString(),
+  completed_at: new Date(sevenDaysAgo.getFullYear(), sevenDaysAgo.getMonth(), sevenDaysAgo.getDate(), 14, 40, 0).toISOString(),
+  created_at: new Date(sevenDaysAgo.getFullYear(), sevenDaysAgo.getMonth(), sevenDaysAgo.getDate(), 14, 30, 0).toISOString(),
+  updated_at: new Date(sevenDaysAgo.getFullYear(), sevenDaysAgo.getMonth(), sevenDaysAgo.getDate(), 14, 40, 0).toISOString()
+});
+
+// 10 days ago (2 sessions)
+const tenDaysAgo = daysAgo(10);
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 1500,
+  completed: 1,
+  started_at: new Date(tenDaysAgo.getFullYear(), tenDaysAgo.getMonth(), tenDaysAgo.getDate(), 9, 15, 0).toISOString(),
+  completed_at: new Date(tenDaysAgo.getFullYear(), tenDaysAgo.getMonth(), tenDaysAgo.getDate(), 9, 40, 0).toISOString(),
+  created_at: new Date(tenDaysAgo.getFullYear(), tenDaysAgo.getMonth(), tenDaysAgo.getDate(), 9, 15, 0).toISOString(),
+  updated_at: new Date(tenDaysAgo.getFullYear(), tenDaysAgo.getMonth(), tenDaysAgo.getDate(), 9, 40, 0).toISOString()
+});
+
+sessions.push({
+  type: 'break',
+  duration_planned: 300,
+  duration_actual: 300,
+  completed: 1,
+  started_at: new Date(tenDaysAgo.getFullYear(), tenDaysAgo.getMonth(), tenDaysAgo.getDate(), 9, 40, 0).toISOString(),
+  completed_at: new Date(tenDaysAgo.getFullYear(), tenDaysAgo.getMonth(), tenDaysAgo.getDate(), 9, 45, 0).toISOString(),
+  created_at: new Date(tenDaysAgo.getFullYear(), tenDaysAgo.getMonth(), tenDaysAgo.getDate(), 9, 40, 0).toISOString(),
+  updated_at: new Date(tenDaysAgo.getFullYear(), tenDaysAgo.getMonth(), tenDaysAgo.getDate(), 9, 45, 0).toISOString()
+});
+
+// 14 days ago (2 sessions)
+const fourteenDaysAgo = daysAgo(14);
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 1495,
+  completed: 1,
+  started_at: new Date(fourteenDaysAgo.getFullYear(), fourteenDaysAgo.getMonth(), fourteenDaysAgo.getDate(), 11, 30, 0).toISOString(),
+  completed_at: new Date(fourteenDaysAgo.getFullYear(), fourteenDaysAgo.getMonth(), fourteenDaysAgo.getDate(), 11, 54, 55).toISOString(),
+  created_at: new Date(fourteenDaysAgo.getFullYear(), fourteenDaysAgo.getMonth(), fourteenDaysAgo.getDate(), 11, 30, 0).toISOString(),
+  updated_at: new Date(fourteenDaysAgo.getFullYear(), fourteenDaysAgo.getMonth(), fourteenDaysAgo.getDate(), 11, 54, 55).toISOString()
+});
+
+sessions.push({
+  type: 'work',
+  duration_planned: 1800,
+  duration_actual: 1800,
+  completed: 1,
+  started_at: new Date(fourteenDaysAgo.getFullYear(), fourteenDaysAgo.getMonth(), fourteenDaysAgo.getDate(), 15, 0, 0).toISOString(),
+  completed_at: new Date(fourteenDaysAgo.getFullYear(), fourteenDaysAgo.getMonth(), fourteenDaysAgo.getDate(), 15, 30, 0).toISOString(),
+  created_at: new Date(fourteenDaysAgo.getFullYear(), fourteenDaysAgo.getMonth(), fourteenDaysAgo.getDate(), 15, 0, 0).toISOString(),
+  updated_at: new Date(fourteenDaysAgo.getFullYear(), fourteenDaysAgo.getMonth(), fourteenDaysAgo.getDate(), 15, 30, 0).toISOString()
+});
+
+// 21 days ago (1 session)
+const twentyOneDaysAgo = daysAgo(21);
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 1500,
+  completed: 1,
+  started_at: new Date(twentyOneDaysAgo.getFullYear(), twentyOneDaysAgo.getMonth(), twentyOneDaysAgo.getDate(), 10, 0, 0).toISOString(),
+  completed_at: new Date(twentyOneDaysAgo.getFullYear(), twentyOneDaysAgo.getMonth(), twentyOneDaysAgo.getDate(), 10, 25, 0).toISOString(),
+  created_at: new Date(twentyOneDaysAgo.getFullYear(), twentyOneDaysAgo.getMonth(), twentyOneDaysAgo.getDate(), 10, 0, 0).toISOString(),
+  updated_at: new Date(twentyOneDaysAgo.getFullYear(), twentyOneDaysAgo.getMonth(), twentyOneDaysAgo.getDate(), 10, 25, 0).toISOString()
+});
+
+// 28 days ago (1 session)
+const twentyEightDaysAgo = daysAgo(28);
+sessions.push({
+  type: 'work',
+  duration_planned: 1500,
+  duration_actual: 300, // Abandoned after 5 min
+  completed: 0,
+  started_at: new Date(twentyEightDaysAgo.getFullYear(), twentyEightDaysAgo.getMonth(), twentyEightDaysAgo.getDate(), 14, 0, 0).toISOString(),
+  completed_at: new Date(twentyEightDaysAgo.getFullYear(), twentyEightDaysAgo.getMonth(), twentyEightDaysAgo.getDate(), 14, 5, 0).toISOString(),
+  created_at: new Date(twentyEightDaysAgo.getFullYear(), twentyEightDaysAgo.getMonth(), twentyEightDaysAgo.getDate(), 14, 0, 0).toISOString(),
+  updated_at: new Date(twentyEightDaysAgo.getFullYear(), twentyEightDaysAgo.getMonth(), twentyEightDaysAgo.getDate(), 14, 5, 0).toISOString()
+});
+
+// Insert all sessions in a transaction
 const insertAll = db.transaction(() => {
-  // Insert settings
-  const insertSettings = db.prepare(`
-    INSERT INTO settings (
-      work_duration,
-      short_break_duration,
-      long_break_duration,
-      sessions_until_long_break,
-      sound_enabled,
-      notifications_enabled
-    ) VALUES (?, ?, ?, ?, ?, ?)
+  const stmt = db.prepare(`
+    INSERT INTO sessions (type, duration_planned, duration_actual, completed, started_at, completed_at, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  insertSettings.run(25, 5, 15, 4, 1, 1);
-  
-  // Insert sessions
-  const insertSession = db.prepare(`
-    INSERT INTO sessions (type, duration_minutes, completed_at, created_at)
-    VALUES (?, ?, ?, ?)
-  `);
-  sessions.forEach(session => {
-    insertSession.run(
+
+  for (const session of sessions) {
+    stmt.run(
       session.type,
-      session.duration_minutes,
+      session.duration_planned,
+      session.duration_actual,
+      session.completed,
+      session.started_at,
       session.completed_at,
-      session.created_at
+      session.created_at,
+      session.updated_at
     );
-  });
-  
-  // Insert daily stats
-  const insertDailyStats = db.prepare(`
-    INSERT INTO daily_stats (date, work_sessions, total_focus_minutes, breaks_taken, streak_day)
-    VALUES (?, ?, ?, ?, ?)
-  `);
-  dailyStatsMap.forEach(stats => {
-    insertDailyStats.run(
-      stats.date,
-      stats.work_sessions,
-      stats.total_focus_minutes,
-      stats.breaks_taken,
-      stats.streak_day
-    );
-  });
+  }
 });
 
 insertAll();
 
-// Get final counts
-const sessionCount = db.prepare('SELECT COUNT(*) as count FROM sessions').get();
-const dailyStatsCount = db.prepare('SELECT COUNT(*) as count FROM daily_stats').get();
-const settingsCount = db.prepare('SELECT COUNT(*) as count FROM settings').get();
+const finalCount = db.prepare('SELECT COUNT(*) as count FROM sessions').get();
+const workCount = db.prepare("SELECT COUNT(*) as count FROM sessions WHERE type = 'work'").get();
+const breakCount = db.prepare("SELECT COUNT(*) as count FROM sessions WHERE type = 'break'").get();
+const completedCount = db.prepare("SELECT COUNT(*) as count FROM sessions WHERE completed = 1").get();
 
-console.log('FocusFlow database seeded successfully!');
-console.log(`Seeded: ${sessionCount.count} sessions, ${dailyStatsCount.count} daily stats, ${settingsCount.count} settings`);
-console.log('\nUsage patterns:');
-console.log('- 30 days of realistic Pomodoro usage');
-console.log('- Mix of productive days and rest days');
-console.log('- Work sessions: 20-30 minutes');
-console.log('- Short breaks: 5 minutes');
-console.log('- Long breaks: 15 minutes (after every 4 work sessions)');
-console.log('- Streak tracking enabled for days with completed work sessions');
+console.log(`✨ FocusFlow database seeded successfully!`);
+console.log(`📊 Seeded: ${finalCount.count} total sessions`);
+console.log(`   - ${workCount.count} work sessions`);
+console.log(`   - ${breakCount.count} break sessions`);
+console.log(`   - ${completedCount.count} completed sessions`);
+console.log(`   - Sessions span across the last 30 days`);
 
 db.close();
