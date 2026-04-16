@@ -1,445 +1,363 @@
-class PomodoroTimer {
-  constructor() {
-    this.modes = {
-      WORK: 'work',
-      SHORT_BREAK: 'short_break',
-      LONG_BREAK: 'long_break'
-    };
+// FocusFlow Shared Client-Side Utilities
+
+// Initialize the global FocusFlow object
+window.FocusFlow = window.FocusFlow || {};
+
+// Dark Mode Management
+const DarkMode = {
+  init() {
+    const stored = localStorage.getItem('darkMode');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = stored === 'true' || (!stored && prefersDark);
     
-    this.defaultSettings = {
-      workDuration: 25,
-      shortBreakDuration: 5,
-      longBreakDuration: 15,
-      sessionsUntilLongBreak: 4,
-      soundEnabled: true,
-      notificationsEnabled: true
-    };
-    
-    this.settings = { ...this.defaultSettings };
-    this.currentMode = this.modes.WORK;
-    this.sessionsCompleted = 0;
-    this.timeRemaining = this.settings.workDuration * 60; // in seconds
-    this.isRunning = false;
-    this.intervalId = null;
-    this.lastTimestamp = null;
-    
-    // DOM elements
-    this.timerDisplay = document.getElementById('timer-display');
-    this.progressRing = document.getElementById('progress-ring');
-    this.sessionCounter = document.getElementById('session-counter');
-    this.modeIndicator = document.getElementById('mode-indicator');
-    this.playPauseBtn = document.getElementById('play-pause-btn');
-    this.playIcon = document.getElementById('play-icon');
-    this.pauseIcon = document.getElementById('pause-icon');
-    this.appBody = document.getElementById('app-body');
-    
-    // Initialize
-    this.init();
-  }
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.style.transition = 'background-color 0.3s, color 0.3s';
+  },
   
-  async init() {
-    // Load settings from server
-    await this.loadSettings();
-    
-    // Set initial UI
-    this.updateDisplay();
-    this.updateProgressRing();
-    this.updateSessionCounter();
-    this.updateModeIndicator();
-    this.updateBackground();
-    
-    // Request notification permission
-    if (this.settings.notificationsEnabled && 'Notification' in window) {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission();
-      }
-    }
-    
-    // Set up audio context for chime
-    this.setupAudio();
-  }
+  toggle() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('darkMode', isDark);
+    return isDark;
+  },
   
-  async loadSettings() {
-    try {
-      const response = await fetch('/api/settings');
-      if (!response.ok) throw new Error('Failed to load settings');
-      
-      const data = await response.json();
-      if (data.success && data.data) {
-        this.settings = {
-          workDuration: data.data.work_duration,
-          shortBreakDuration: data.data.short_break_duration,
-          longBreakDuration: data.data.long_break_duration,
-          sessionsUntilLongBreak: data.data.sessions_until_long_break,
-          soundEnabled: data.data.sound_enabled,
-          notificationsEnabled: data.data.notifications_enabled
-        };
-        
-        // Update settings form
-        document.getElementById('work-duration').value = this.settings.workDuration;
-        document.getElementById('short-break-duration').value = this.settings.shortBreakDuration;
-        document.getElementById('long-break-duration').value = this.settings.longBreakDuration;
-        document.getElementById('sessions-until-long-break').value = this.settings.sessionsUntilLongBreak;
-        
-        // Reset timer with new settings
-        this.resetTimer(false);
-      }
-    } catch (error) {
-      console.error('Error loading settings:', error);
-      showToast('Failed to load settings. Using defaults.');
-    }
+  isDark() {
+    return document.documentElement.classList.contains('dark');
   }
+};
+
+// API Helper Functions
+const API = {
+  baseUrl: '/api',
   
-  async saveSettings() {
-    const newSettings = {
-      workDuration: parseInt(document.getElementById('work-duration').value),
-      shortBreakDuration: parseInt(document.getElementById('short-break-duration').value),
-      longBreakDuration: parseInt(document.getElementById('long-break-duration').value),
-      sessionsUntilLongBreak: parseInt(document.getElementById('sessions-until-long-break').value),
-      soundEnabled: this.settings.soundEnabled,
-      notificationsEnabled: this.settings.notificationsEnabled
-    };
+  async get(endpoint, params = {}) {
+    const url = new URL(`${this.baseUrl}${endpoint}`, window.location.origin);
+    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
     
     try {
-      const response = await fetch('/api/settings', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          work_duration: newSettings.workDuration,
-          short_break_duration: newSettings.shortBreakDuration,
-          long_break_duration: newSettings.longBreakDuration,
-          sessions_until_long_break: newSettings.sessionsUntilLongBreak,
-          sound_enabled: newSettings.soundEnabled,
-          notifications_enabled: newSettings.notificationsEnabled
-        })
-      });
-      
-      if (!response.ok) throw new Error('Failed to save settings');
-      
-      const data = await response.json();
-      if (data.success) {
-        this.settings = newSettings;
-        this.resetTimer(false);
-        closeSettings();
-        showToast('Settings saved successfully');
-      } else {
-        throw new Error(data.error || 'Unknown error');
-      }
-    } catch (error) {
-      console.error('Error saving settings:', error);
-      showToast('Failed to save settings');
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      return await res.json();
+    } catch (err) {
+      Toast.error(`Failed to fetch: ${err.message}`);
+      return { success: false, error: err.message };
     }
-  }
+  },
   
-  setupAudio() {
-    // Create a simple chime sound using Web Audio API
-    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  
-  playChime() {
-    if (!this.settings.soundEnabled) return;
-    
+  async post(endpoint, data = {}) {
     try {
-      const oscillator = this.audioContext.createOscillator();
-      const gainNode = this.audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(this.audioContext.destination);
-      
-      oscillator.type = 'sine';
-      oscillator.frequency.value = 880; // A5 note
-      gainNode.gain.value = 0.3;
-      
-      oscillator.start();
-      
-      // Fade out
-      gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 1);
-      oscillator.stop(this.audioContext.currentTime + 1);
-    } catch (error) {
-      console.error('Error playing chime:', error);
-    }
-  }
-  
-  start() {
-    if (this.isRunning) return;
-    
-    this.isRunning = true;
-    this.lastTimestamp = performance.now();
-    this.playIcon.classList.add('hidden');
-    this.pauseIcon.classList.remove('hidden');
-    
-    // Use requestAnimationFrame for smooth animation
-    this.tick();
-  }
-  
-  pause() {
-    if (!this.isRunning) return;
-    
-    this.isRunning = false;
-    this.playIcon.classList.remove('hidden');
-    this.pauseIcon.classList.add('hidden');
-    
-    if (this.intervalId) {
-      cancelAnimationFrame(this.intervalId);
-      this.intervalId = null;
-    }
-  }
-  
-  tick() {
-    if (!this.isRunning) return;
-    
-    const now = performance.now();
-    const delta = (now - this.lastTimestamp) / 1000; // in seconds
-    this.lastTimestamp = now;
-    
-    this.timeRemaining = Math.max(0, this.timeRemaining - delta);
-    this.updateDisplay();
-    this.updateProgressRing();
-    this.updateDocumentTitle();
-    
-    if (this.timeRemaining <= 0) {
-      this.completeSession();
-    } else {
-      this.intervalId = requestAnimationFrame(() => this.tick());
-    }
-  }
-  
-  completeSession() {
-    this.pause();
-    
-    // Play chime
-    this.playChime();
-    
-    // Show notification
-    if (this.settings.notificationsEnabled && 'Notification' in window && Notification.permission === 'granted') {
-      const title = this.currentMode === this.modes.WORK ? 'Work session completed!' : 'Break completed!';
-      const body = this.currentMode === this.modes.WORK ? 
-        'Time for a break.' : 
-        'Back to work!';
-      
-      new Notification(title, { body });
-    }
-    
-    // Save session to database
-    this.saveSession();
-    
-    // Transition to next mode
-    if (this.currentMode === this.modes.WORK) {
-      this.sessionsCompleted++;
-      this.updateSessionCounter();
-      
-      // Determine break type
-      if (this.sessionsCompleted % this.settings.sessionsUntilLongBreak === 0) {
-        this.switchMode(this.modes.LONG_BREAK);
-      } else {
-        this.switchMode(this.modes.SHORT_BREAK);
-      }
-    } else {
-      // Break is over, go back to work
-      this.switchMode(this.modes.WORK);
-    }
-    
-    showToast(
-      this.currentMode === this.modes.WORK ? 
-      'Break completed! Ready for work?' : 
-      'Great work! Time for a break.'
-    );
-  }
-  
-  async saveSession() {
-    try {
-      const durationMinutes = this.getDurationForMode(this.currentMode);
-      
-      const response = await fetch('/api/sessions', {
+      const res = await fetch(`${this.baseUrl}${endpoint}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          type: this.currentMode,
-          duration_minutes: durationMinutes
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      return await res.json();
+    } catch (err) {
+      Toast.error(`Failed to post: ${err.message}`);
+      return { success: false, error: err.message };
+    }
+  },
+  
+  async exportCSV() {
+    try {
+      const res = await fetch(`${this.baseUrl}/sessions/export`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       
-      if (!response.ok) throw new Error('Failed to save session');
+      // Get the filename from the response headers
+      const contentDisposition = res.headers.get('Content-Disposition');
+      let filename = 'focusflow_sessions.csv';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?([^";]+)"?/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1];
+        }
+      }
       
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Unknown error');
+      // Create a blob and download it
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
+      return { success: true };
+    } catch (err) {
+      Toast.error(`Failed to export CSV: ${err.message}`);
+      return { success: false, error: err.message };
+    }
+  }
+};
+
+// Toast Notification System
+const Toast = {
+  container: null,
+  
+  init() {
+    this.container = document.createElement('div');
+    this.container.className = 'fixed bottom-4 right-4 z-50 space-y-2';
+    document.body.appendChild(this.container);
+  },
+  
+  show(message, type = 'info') {
+    if (!this.container) this.init();
+    
+    const toast = document.createElement('div');
+    const bgColor = {
+      success: 'bg-green-500',
+      error: 'bg-red-500',
+      info: 'bg-blue-500'
+    }[type] || 'bg-gray-500';
+    
+    toast.className = `${bgColor} text-white px-4 py-2 rounded-md shadow-lg animate-fade-in`;
+    toast.textContent = message;
+    
+    this.container.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(8px)';
+      toast.style.transition = 'opacity 0.3s, transform 0.3s';
+      
+      setTimeout(() => {
+        if (this.container.contains(toast)) {
+          this.container.removeChild(toast);
+        }
+      }, 300);
+    }, 3000);
+  },
+  
+  success(message) {
+    this.show(message, 'success');
+  },
+  
+  error(message) {
+    this.show(message, 'error');
+  },
+  
+  info(message) {
+    this.show(message, 'info');
+  }
+};
+
+// App State Management
+const AppState = {
+  state: {},
+  subscribers: {},
+  
+  init() {
+    // Load settings from localStorage
+    const savedSettings = localStorage.getItem('focusflow_settings');
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings);
+        Object.keys(settings).forEach(key => {
+          this.state[key] = settings[key];
+        });
+      } catch (err) {
+        console.error('Failed to parse settings:', err);
       }
-    } catch (error) {
-      console.error('Error saving session:', error);
-      showToast('Failed to save session data');
-    }
-  }
-  
-  resetTimer(showConfirmation = true) {
-    if (showConfirmation && this.isRunning) {
-      if (!confirm('Are you sure you want to reset the timer?')) {
-        return;
-      }
     }
     
-    this.pause();
-    this.timeRemaining = this.getDurationForMode(this.currentMode) * 60;
-    this.updateDisplay();
-    this.updateProgressRing();
-    this.updateDocumentTitle();
-  }
+    // Set defaults if not loaded
+    this.state = {
+      timerMode: this.state.timerMode || 'work',
+      workDuration: this.state.workDuration || 25,
+      breakDuration: this.state.breakDuration || 5,
+      ambientSound: this.state.ambientSound || 'none',
+      ambientVolume: this.state.ambientVolume || 0.5,
+      notificationSound: this.state.notificationSound !== undefined ? this.state.notificationSound : true,
+      ...this.state
+    };
+  },
   
-  switchMode(mode) {
-    this.currentMode = mode;
-    this.timeRemaining = this.getDurationForMode(mode) * 60;
-    this.updateDisplay();
-    this.updateProgressRing();
-    this.updateModeIndicator();
-    this.updateBackground();
-    this.updateDocumentTitle();
-  }
+  get(key) {
+    return this.state[key];
+  },
   
-  getDurationForMode(mode) {
-    switch (mode) {
-      case this.modes.WORK:
-        return this.settings.workDuration;
-      case this.modes.SHORT_BREAK:
-        return this.settings.shortBreakDuration;
-      case this.modes.LONG_BREAK:
-        return this.settings.longBreakDuration;
-      default:
-        return this.settings.workDuration;
+  set(key, value) {
+    const oldValue = this.state[key];
+    this.state[key] = value;
+    
+    // Save to localStorage
+    localStorage.setItem('focusflow_settings', JSON.stringify(this.state));
+    
+    // Notify subscribers
+    if (this.subscribers[key]) {
+      this.subscribers[key].forEach(callback => callback(value, oldValue));
     }
-  }
+  },
   
-  updateDisplay() {
-    const minutes = Math.floor(this.timeRemaining / 60);
-    const seconds = Math.floor(this.timeRemaining % 60);
-    this.timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-  
-  updateProgressRing() {
-    const totalTime = this.getDurationForMode(this.currentMode) * 60;
-    const percentage = this.timeRemaining / totalTime;
-    const circumference = 2 * Math.PI * 70; // radius is 70
-    const offset = circumference * (1 - percentage);
-    
-    this.progressRing.style.strokeDashoffset = offset;
-    
-    // Update color based on mode
-    switch (this.currentMode) {
-      case this.modes.WORK:
-        this.progressRing.setAttribute('stroke', '#f43f5e'); // work-500
-        break;
-      case this.modes.SHORT_BREAK:
-        this.progressRing.setAttribute('stroke', '#22c55e'); // break-500
-        break;
-      case this.modes.LONG_BREAK:
-        this.progressRing.setAttribute('stroke', '#3b82f6'); // longBreak-500
-        break;
+  subscribe(key, callback) {
+    if (!this.subscribers[key]) {
+      this.subscribers[key] = [];
     }
-  }
-  
-  updateSessionCounter() {
-    const sessionsUntilLong = this.settings.sessionsUntilLongBreak;
-    const currentInCycle = (this.sessionsCompleted % sessionsUntilLong) || sessionsUntilLong;
-    this.sessionCounter.textContent = `${currentInCycle}/${sessionsUntilLong}`;
-  }
-  
-  updateModeIndicator() {
-    let text, className;
+    this.subscribers[key].push(callback);
     
-    switch (this.currentMode) {
-      case this.modes.WORK:
-        text = 'Work';
-        className = 'bg-work-500 text-white';
-        break;
-      case this.modes.SHORT_BREAK:
-        text = 'Short Break';
-        className = 'bg-break-500 text-white';
-        break;
-      case this.modes.LONG_BREAK:
-        text = 'Long Break';
-        className = 'bg-longBreak-500 text-white';
-        break;
+    // Return unsubscribe function
+    return () => {
+      this.subscribers[key] = this.subscribers[key].filter(cb => cb !== callback);
+    };
+  }
+};
+
+// Keyboard Shortcuts
+const Keyboard = {
+  shortcuts: {},
+  helpOpen: false,
+  
+  init() {
+    document.addEventListener('keydown', this.handleKeyDown.bind(this));
+  },
+  
+  register(key, callback, description) {
+    this.shortcuts[key.toLowerCase()] = { callback, description };
+  },
+  
+  handleKeyDown(e) {
+    const key = e.key.toLowerCase();
+    
+    // Ignore if typing in an input, textarea, or contenteditable
+    if (e.target.tagName === 'INPUT' || 
+        e.target.tagName === 'TEXTAREA' || 
+        e.target.isContentEditable) {
+      return;
     }
     
-    this.modeIndicator.textContent = text;
-    this.modeIndicator.className = `px-3 py-1 text-sm font-semibold rounded-full ${className}`;
-  }
-  
-  updateBackground() {
-    // Remove all mode classes
-    this.appBody.classList.remove('bg-work-mode', 'bg-break-mode', 'bg-long-break-mode');
-    
-    // Add current mode class
-    switch (this.currentMode) {
-      case this.modes.WORK:
-        this.appBody.classList.add('bg-work-mode');
-        break;
-      case this.modes.SHORT_BREAK:
-        this.appBody.classList.add('bg-break-mode');
-        break;
-      case this.modes.LONG_BREAK:
-        this.appBody.classList.add('bg-long-break-mode');
-        break;
+    if (this.shortcuts[key]) {
+      e.preventDefault();
+      this.shortcuts[key].callback();
     }
-  }
+  },
   
-  updateDocumentTitle() {
-    const minutes = Math.floor(this.timeRemaining / 60);
-    const seconds = Math.floor(this.timeRemaining % 60);
-    const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  showShortcuts() {
+    if (this.helpOpen) return;
+    this.helpOpen = true;
     
-    let modeText;
-    switch (this.currentMode) {
-      case this.modes.WORK:
-        modeText = 'Work';
-        break;
-      case this.modes.SHORT_BREAK:
-        modeText = 'Break';
-        break;
-      case this.modes.LONG_BREAK:
-        modeText = 'Long Break';
-        break;
-    }
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4';
+    overlay.onclick = () => {
+      document.body.removeChild(overlay);
+      this.helpOpen = false;
+    };
     
-    document.title = `${timeStr} - ${modeText} | FocusFlow`;
+    const modal = document.createElement('div');
+    modal.className = 'bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6 animate-fade-in';
+    modal.onclick = (e) => e.stopPropagation();
+    
+    const title = document.createElement('h2');
+    title.className = 'text-xl font-bold mb-4 text-slate-900 dark:text-white';
+    title.textContent = 'Keyboard Shortcuts';
+    
+    const list = document.createElement('ul');
+    list.className = 'space-y-2';
+    
+    Object.entries(this.shortcuts).forEach(([key, { description }]) => {
+      const item = document.createElement('li');
+      item.className = 'flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700';
+      
+      const keyEl = document.createElement('kbd');
+      keyEl.className = 'px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-sm font-mono text-slate-800 dark:text-slate-200';
+      keyEl.textContent = key;
+      
+      const descEl = document.createElement('span');
+      descEl.className = 'text-slate-600 dark:text-slate-400';
+      descEl.textContent = description;
+      
+      item.appendChild(keyEl);
+      item.appendChild(descEl);
+      list.appendChild(item);
+    });
+    
+    const close = document.createElement('button');
+    close.className = 'mt-4 w-full py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-colors';
+    close.textContent = 'Close';
+    close.onclick = () => {
+      document.body.removeChild(overlay);
+      this.helpOpen = false;
+    };
+    
+    modal.appendChild(title);
+    modal.appendChild(list);
+    modal.appendChild(close);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
   }
+};
+
+// Date/Time Formatting Utilities
+const DateTime = {
+  formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  },
+  
+  formatDate(date) {
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  },
+  
+  formatDateTime(date) {
+    return date.toLocaleString('en-US', { 
+      weekday: 'short', 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  },
+  
+  getTodayRange() {
+    const now = new Date();
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(now);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  },
+  
+  getWeekRange(date = new Date()) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day;
+    const start = new Date(d.setDate(diff));
+    start.setHours(0, 0, 0, 0);
+    
+    const end = new Date(d.setDate(diff + 6));
+    end.setHours(23, 59, 59, 999);
+    
+    return { start, end };
+  }
+};
+
+// Initialize all modules
+function initApp() {
+  DarkMode.init();
+  AppState.init();
+  Keyboard.init();
+  Toast.init();
+  
+  // Export modules to global scope
+  window.FocusFlow = {
+    DarkMode,
+    API,
+    Toast,
+    AppState,
+    Keyboard,
+    DateTime
+  };
 }
 
-// Toast notification system
-function showToast(message) {
-  const toast = document.getElementById('toast');
-  const toastMsg = document.getElementById('toast-msg');
-  
-  toastMsg.textContent = message;
-  toast.classList.remove('hidden');
-  
-  setTimeout(() => {
-    toast.classList.add('hidden');
-  }, 3000);
-}
-
-// Initialize timer when DOM is loaded
-let timer;
-document.addEventListener('DOMContentLoaded', () => {
-  timer = new PomodoroTimer();
-});
-
-// Timer controls
-function toggleTimer() {
-  if (timer.isRunning) {
-    timer.pause();
-  } else {
-    timer.start();
-  }
-}
-
-function resetTimer() {
-  timer.resetTimer();
-}
-
-function saveSettings() {
-  timer.saveSettings();
-}
+// Initialize on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', initApp);
