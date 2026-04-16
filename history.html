@@ -1,0 +1,6 @@
+            document.getElementById('export-csv').addEventListener('click', async () => {
+              const result = await window.FocusFlow.API.exportCSV();
+              if (!result.success) {
+                window.FocusFlow.Toast.error('Failed to export CSV');
+              }
+            });
