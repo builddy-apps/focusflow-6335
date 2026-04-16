@@ -1,6 +1,509 @@
-            document.getElementById('export-csv').addEventListener('click', async () => {
-              const result = await window.FocusFlow.API.exportCSV();
-              if (!result.success) {
-                window.FocusFlow.Toast.error('Failed to export CSV');
-              }
-            });
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusFlow - Session History</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            work: '#E8725C',
+            'work-hover': '#D5634D',
+            break: '#5CC5E8',
+            'break-hover': '#4AB4D9',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #fda085 100%);
+      background-attachment: fixed;
+      min-height: 100vh;
+    }
+
+    .dark body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #533483 75%, #2c003e 100%);
+      background-attachment: fixed;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .dark .glass {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .dark .glass-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .glass-modal {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .dark .glass-modal {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .glass-button {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .glass-button:hover {
+      background: rgba(255, 255, 255, 0.35);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .dark .glass-button {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .dark .glass-button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .glass-table {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .dark .glass-table {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen text-gray-800 dark:text-gray-100 transition-colors duration-300">
+  <!-- Navigation -->
+  <nav class="glass fixed top-0 left-0 right-0 z-50 px-6 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-xl font-bold text-white">FocusFlow</span>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <a href="index.html" class="text-white/70 hover:text-white font-medium transition-colors">Timer</a>
+        <a href="history.html" class="text-white/90 hover:text-white font-medium transition-colors">History</a>
+        <a href="analytics.html" class="text-white/70 hover:text-white font-medium transition-colors">Analytics</a>
+        <button id="theme-toggle" class="glass-button p-2 rounded-lg text-white" title="Toggle dark mode">
+          <svg id="theme-icon-light" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg id="theme-icon-dark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-6 pt-24 pb-12">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-white mb-2">Session History</h1>
+      <p class="text-white/70">Track your focus sessions and productivity</p>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid md:grid-cols-3 gap-6 mb-8">
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-white/70 text-sm font-medium">Total Sessions</span>
+          <svg class="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </div>
+        <div id="stat-total" class="text-3xl font-bold text-white">0</div>
+      </div>
+      
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-white/70 text-sm font-medium">Today's Focus</span>
+          <svg class="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div id="stat-focus-time" class="text-3xl font-bold text-white">0m</div>
+      </div>
+      
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-white/70 text-sm font-medium">Completion Rate</span>
+          <svg class="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div id="stat-completion" class="text-3xl font-bold text-white">0%</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="glass-card rounded-2xl p-6 mb-6">
+      <div class="flex flex-wrap items-center gap-4">
+        <div class="flex-1 min-w-[200px]">
+          <label class="text-sm text-white/70 mb-1 block">Start Date</label>
+          <input id="filter-date-from" type="date" class="glass-button w-full rounded-xl px-4 py-2 text-white bg-transparent border-white/30 focus:border-white focus:outline-none">
+        </div>
+        
+        <div class="flex-1 min-w-[200px]">
+          <label class="text-sm text-white/70 mb-1 block">End Date</label>
+          <input id="filter-date-to" type="date" class="glass-button w-full rounded-xl px-4 py-2 text-white bg-transparent border-white/30 focus:border-white focus:outline-none">
+        </div>
+        
+        <div class="flex-1 min-w-[150px]">
+          <label class="text-sm text-white/70 mb-1 block">Type</label>
+          <select id="filter-type" class="glass-button w-full rounded-xl px-4 py-2 text-white bg-transparent border-white/30 focus:border-white focus:outline-none">
+            <option value="all" class="bg-gray-800">All</option>
+            <option value="work" class="bg-gray-800">Work</option>
+            <option value="break" class="bg-gray-800">Break</option>
+          </select>
+        </div>
+        
+        <div class="flex items-end">
+          <button id="btn-apply-filters" class="glass-button px-6 py-2 rounded-xl font-medium text-white hover:bg-white/25 transition-colors">
+            Apply
+          </button>
+        </div>
+        
+        <div class="flex items-end">
+          <button id="export-csv" class="glass-button px-6 py-2 rounded-xl font-medium text-white hover:bg-white/25 transition-colors flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Export CSV</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sessions Table -->
+    <div class="glass-table rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-white/20">
+              <th class="px-6 py-4 text-left text-sm font-semibold text-white/80">Date</th>
+              <th class="px-6 py-4 text-left text-sm font-semibold text-white/80">Type</th>
+              <th class="px-6 py-4 text-left text-sm font-semibold text-white/80">Duration</th>
+              <th class="px-6 py-4 text-left text-sm font-semibold text-white/80">Status</th>
+            </tr>
+          </thead>
+          <tbody id="sessions-body">
+            <!-- Sessions will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Empty State -->
+      <div id="empty-state" class="hidden py-16 text-center">
+        <svg class="w-16 h-16 mx-auto text-white/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <p class="text-white/50 text-lg">No sessions found</p>
+        <p class="text-white/30 text-sm mt-1">Start a focus session to see your history</p>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between mt-6">
+      <div class="text-white/60 text-sm">
+        Showing <span id="page-from">0</span> to <span id="page-to">0</span> of <span id="page-total">0</span> sessions
+      </div>
+      <div class="flex space-x-2">
+        <button id="btn-prev" class="glass-button px-4 py-2 rounded-xl text-white text-sm disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+          Previous
+        </button>
+        <button id="btn-next" class="glass-button px-4 py-2 rounded-xl text-white text-sm disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+          Next
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-3"></div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+  <script>
+    // History page state
+    const HistoryState = {
+      sessions: [],
+      currentPage: 1,
+      perPage: 15,
+      totalPages: 1,
+      filters: {
+        dateFrom: null,
+        dateTo: null,
+        type: 'all'
+      }
+    };
+
+    // Format date
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Format duration
+    function formatDuration(minutes) {
+      if (minutes < 60) {
+        return `${minutes}m`;
+      }
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+    }
+
+    // Load sessions from API
+    async function loadSessions() {
+      try {
+        const params = new URLSearchParams({
+          page: HistoryState.currentPage,
+          limit: HistoryState.perPage
+        });
+
+        if (HistoryState.filters.dateFrom) {
+          params.append('dateFrom', HistoryState.filters.dateFrom);
+        }
+        if (HistoryState.filters.dateTo) {
+          params.append('dateTo', HistoryState.filters.dateTo);
+        }
+        if (HistoryState.filters.type !== 'all') {
+          params.append('type', HistoryState.filters.type);
+        }
+
+        const response = await fetch(`/api/sessions?${params}`);
+        const data = await response.json();
+
+        if (data.success) {
+          HistoryState.sessions = data.sessions || [];
+          HistoryState.totalPages = data.totalPages || 1;
+          HistoryState.currentPage = data.currentPage || 1;
+          renderSessions();
+          updatePagination();
+        } else {
+          if (window.FocusFlow && window.FocusFlow.Toast) {
+            window.FocusFlow.Toast.error('Failed to load sessions');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading sessions:', error);
+        if (window.FocusFlow && window.FocusFlow.Toast) {
+          window.FocusFlow.Toast.error('Failed to load sessions');
+        }
+      }
+    }
+
+    // Load stats
+    async function loadStats() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const response = await fetch(`/api/sessions/stats?type=daily&date=${today}`);
+        const data = await response.json();
+
+        if (data.success && data.stats) {
+          document.getElementById('stat-total').textContent = data.stats.totalSessions || 0;
+          document.getElementById('stat-focus-time').textContent = formatDuration(data.stats.totalFocusMinutes || 0);
+          document.getElementById('stat-completion').textContent = `${Math.round(data.stats.completionRate || 0)}%`;
+        }
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    // Render sessions table
+    function renderSessions() {
+      const tbody = document.getElementById('sessions-body');
+      const emptyState = document.getElementById('empty-state');
+
+      if (HistoryState.sessions.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      
+      tbody.innerHTML = HistoryState.sessions.map(session => {
+        const typeColor = session.type === 'work' ? 'bg-work/20 text-white' : 'bg-break/20 text-white';
+        const statusColor = session.completed ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300';
+        const statusText = session.completed ? 'Completed' : 'Incomplete';
+        
+        return `
+          <tr class="border-b border-white/10 hover:bg-white/5 transition-colors">
+            <td class="px-6 py-4 text-sm text-white/90">${formatDate(session.started_at)}</td>
+            <td class="px-6 py-4">
+              <span class="px-3 py-1 rounded-full text-xs font-medium ${typeColor}">
+                ${session.type.charAt(0).toUpperCase() + session.type.slice(1)}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-sm text-white/90">${formatDuration(session.duration_actual || session.duration_planned)}</td>
+            <td class="px-6 py-4">
+              <span class="px-3 py-1 rounded-full text-xs font-medium ${statusColor}">
+                ${statusText}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Update pagination controls
+    function updatePagination() {
+      const total = HistoryState.totalPages * HistoryState.perPage;
+      const from = (HistoryState.currentPage - 1) * HistoryState.perPage + 1;
+      const to = Math.min(HistoryState.currentPage * HistoryState.perPage, total);
+
+      document.getElementById('page-from').textContent = HistoryState.sessions.length > 0 ? from : 0;
+      document.getElementById('page-to').textContent = to;
+      document.getElementById('page-total').textContent = total;
+
+      document.getElementById('btn-prev').disabled = HistoryState.currentPage <= 1;
+      document.getElementById('btn-next').disabled = HistoryState.currentPage >= HistoryState.totalPages;
+    }
+
+    // Export CSV
+    async function exportCSV() {
+      try {
+        const params = new URLSearchParams();
+        
+        if (HistoryState.filters.dateFrom) {
+          params.append('dateFrom', HistoryState.filters.dateFrom);
+        }
+        if (HistoryState.filters.dateTo) {
+          params.append('dateTo', HistoryState.filters.dateTo);
+        }
+        if (HistoryState.filters.type !== 'all') {
+          params.append('type', HistoryState.filters.type);
+        }
+
+        const response = await fetch(`/api/sessions/export?${params}`);
+        
+        if (!response.ok) {
+          throw new Error('Export failed');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `focusflow-sessions-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        if (window.FocusFlow && window.FocusFlow.Toast) {
+          window.FocusFlow.Toast.success('CSV exported successfully');
+        }
+      } catch (error) {
+        console.error('Error exporting CSV:', error);
+        if (window.FocusFlow && window.FocusFlow.Toast) {
+          window.FocusFlow.Toast.error('Failed to export CSV');
+        }
+      }
+    }
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', () => {
+      // Load initial data
+      loadSessions();
+      loadStats();
+
+      // Apply filters button
+      document.getElementById('btn-apply-filters').addEventListener('click', () => {
+        HistoryState.filters.dateFrom = document.getElementById('filter-date-from').value || null;
+        HistoryState.filters.dateTo = document.getElementById('filter-date-to').value || null;
+        HistoryState.filters.type = document.getElementById('filter-type').value;
+        HistoryState.currentPage = 1;
+        loadSessions();
+      });
+
+      // Pagination buttons
+      document.getElementById('btn-prev').addEventListener('click', () => {
+        if (HistoryState.currentPage > 1) {
+          HistoryState.currentPage--;
+          loadSessions();
+        }
+      });
+
+      document.getElementById('btn-next').addEventListener('click', () => {
+        if (HistoryState.currentPage < HistoryState.totalPages) {
+          HistoryState.currentPage++;
+          loadSessions();
+        }
+      });
+
+      // Export CSV button
+      document.getElementById('export-csv').addEventListener('click', () => {
+        exportCSV();
+      });
+    });
+  </script>
+</body>
+</html>
