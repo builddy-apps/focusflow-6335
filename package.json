@@ -1,7 +1,7 @@
 {
   "name": "focusflow",
   "version": "1.0.0",
-  "description": "A beautiful Pomodoro timer app with session tracking, analytics, streak calendar, and ambient sounds for rewarding focus sessions.",
+  "description": "A calming Pomodoro timer that helps you build focus, one session at a time.",
   "type": "module",
   "main": "backend/server.js",
   "scripts": {
